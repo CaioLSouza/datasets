@@ -1,0 +1,167 @@
+[
+  {
+    "key": "performance_carteiras",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Estrategia\\Carteiras\\Performance carteiras.xlsm",
+    "prod_filetype": "xlsm",
+    "sample_file": "performance_carteiras.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "multiple (Composicao/Carteira-*/Desempenho-*)",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/performance_carteiras.xlsx",
+    "description": "Historico de composicao e performance das carteiras XP"
+  },
+  {
+    "key": "singlename_flows",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\databricks-singlename-flows.parquet",
+    "prod_filetype": "parquet",
+    "sample_file": "singlename_flows.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/singlename_flows.xlsx",
+    "description": "Fluxo por participante por papel da Bolsa (indexado por cod_ativo,data)"
+  },
+  {
+    "key": "index_composition",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\economatica-index_composition.parquet",
+    "prod_filetype": "parquet",
+    "sample_file": "index_composition.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/index_composition.xlsx",
+    "description": "Composicao/peso por papel de indices (IBOV,SMLL,MLCX,IBX50,IBX100)"
+  },
+  {
+    "key": "market_cap",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\economatica-market_cap.parquet",
+    "prod_filetype": "parquet",
+    "sample_file": "market_cap.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/market_cap.xlsx",
+    "description": "Historico de market cap (classe e companhia)"
+  },
+  {
+    "key": "market_data",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\economatica-market_data.parquet",
+    "prod_filetype": "parquet",
+    "sample_file": "market_data.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/market_data.xlsx",
+    "description": "Historico de precos OHLCV por acao"
+  },
+  {
+    "key": "short_selling",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\economatica-short_selling.parquet",
+    "prod_filetype": "parquet",
+    "sample_file": "short_selling.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/short_selling.xlsx",
+    "description": "Short interest, lending rate, days to cover, free float"
+  },
+  {
+    "key": "consensus",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\eikon-consensus.parquet",
+    "prod_filetype": "parquet",
+    "sample_file": "consensus.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/consensus.xlsx",
+    "description": "Consenso Refinitiv (~86 metricas forward/analistas)"
+  },
+  {
+    "key": "factor_zoo",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\factor_zoo.parquet",
+    "prod_filetype": "parquet",
+    "sample_file": "factor_zoo.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/factor_zoo.xlsx",
+    "description": "Master single-name (~322 colunas) indexado por cod_ativo,data"
+  },
+  {
+    "key": "sector_classification",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\xpqs-sector_classification.xlsx",
+    "prod_filetype": "xlsx",
+    "sample_file": "sector_classification.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "Cadastro / De Para",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/sector_classification.xlsx",
+    "description": "Taxonomia setorial XP (chave cod_ativo)"
+  },
+  {
+    "key": "investors_participation",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\b3\\b3-investors_participation.xlsx",
+    "prod_filetype": "xlsx",
+    "sample_file": "investors_participation.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "Daily / Cumulative",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/investors_participation.xlsx",
+    "description": "Fluxo consolidado a vista por participante"
+  },
+  {
+    "key": "factor_returns",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\factor_output\\factor_returns.xlsx",
+    "prod_filetype": "xlsx",
+    "sample_file": "factor_returns.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "Top / Bottom / LS",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/factor_returns.xlsx",
+    "description": "Indices de retorno dos fatores XP (~173 fatores)"
+  },
+  {
+    "key": "bdr_market_data",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\raw\\bdr_market_data.csv",
+    "prod_filetype": "csv",
+    "sample_file": "bdr_market_data.csv",
+    "sample_filetype": "csv",
+    "csv_sep": ",",
+    "sheets": "",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/bdr_market_data.csv",
+    "description": "Precos historicos de BDRs (ticker tipo MMMC34<XBSP>)"
+  },
+  {
+    "key": "comp_sheet",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\COMP SHEET\\raw_data.xlsx",
+    "prod_filetype": "xlsx",
+    "sample_file": "comp_sheet.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "Sheet1",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/comp_sheet.xlsx",
+    "description": "Estimativas e recomendacoes dos analistas XP (COMP SHEET)"
+  },
+  {
+    "key": "sector_index",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\Setorial\\Raw\\IBOV_MACRO_SECTOR_VALUE_WEIGHTED_INDEX.xlsx",
+    "prod_filetype": "xlsx",
+    "sample_file": "sector_index.xlsx",
+    "sample_filetype": "xlsx",
+    "csv_sep": "",
+    "sheets": "Sheet1",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/sector_index.xlsx",
+    "description": "Performance historica setorial do Ibovespa (value-weighted)"
+  },
+  {
+    "key": "future_flows",
+    "prod_path": "\\\\xpdocs\\Research\\Equities\\Quant\\_Cross Data\\raw\\databricks-future-flows.csv",
+    "prod_filetype": "csv",
+    "sample_file": "future_flows.csv",
+    "sample_filetype": "csv",
+    "csv_sep": ";",
+    "sheets": "",
+    "github_raw_url": "https://raw.githubusercontent.com/CaioLSouza/datasets/refs/heads/claude/s3-link-access-nzk1gb/xp-strategy-dashboard/samples/future_flows.csv",
+    "description": "Fluxo consolidado no mercado de futuros por participante"
+  }
+]
