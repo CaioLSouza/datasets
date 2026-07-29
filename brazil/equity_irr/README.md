@@ -35,6 +35,22 @@ average of the names trading that month, then extended backwards.
 Columns `Simple average` and `Simple median` are kept deliberately, so the composition jumps the
 index avoids remain visible.
 
+## Where the NTN-B comes from
+
+It is not an external series. Each source file carries its own NTN-B columns, and those are what
+is used here:
+
+| Source | Columns | Label in the file |
+|---|---|---|
+| Infra | `R` / `S` | `10-year NTN-B` / `15-year NTN-B` |
+| Utilities | `CQ` / `CR` | `10-year NTN-B` / `15-year NTN-B` |
+| Malls | `X` / `Y` | `10-year NTN-B (2035) Yield` / `15-year NTN-B (2040) Yield` |
+
+On `Company Summary` each company is paired with the NTN-B from **its own file**, as of its own
+last date, so the spread is measured on matching dates. On the index sheet the precedence is
+infra, then malls — utilities is never reached, because infra spans the whole period in which
+utilities exists. See the caveats below on the disagreement between the three.
+
 ## Caveats
 
 - **Percentile windows differ by sector.** Utilities percentiles rest on ~13 months of history;
@@ -45,9 +61,19 @@ index avoids remain visible.
   shaded and flagged, and it is excluded from every aggregate.
 - **Snapshot dates differ** — 24-Jul-2026 (infra), 27-Jul-2026 (utilities), 22/29-May-2026
   (malls). The index is calendar-aligned, so its final month covers the 21 names still reporting.
-- **Q2-2022 NTN-B is unreliable.** The only source that far back dips to ~3-4% for four months,
-  against ~5.7% around it, so the index spread is not meaningful for Apr–Jul 2022. The IRR
-  series themselves are unaffected.
+- **The three files disagree on the NTN-B.** Across the 389 days where infra and utilities
+  overlap they never once agree: utilities runs on average **+0.33 p.p.** above infra (range
+  +0.16 to +0.65). The malls file pins a specific bond (NTN-B 2035) while the other two say only
+  "10-year", which would explain the drift, though none of the files states its method. Because
+  each company is paired with the NTN-B from its own file, **spreads are not strictly comparable
+  across sectors** — utilities and sanitation names are measured against a bar ~0.33 p.p. higher
+  than infra names, understating their spreads by roughly that much. Within a sector,
+  comparisons are unaffected.
+- **The malls NTN-B is wrong from Apr-2022 to Apr-2023.** It reads 3.3–4.8% for those 13 months
+  against ~5.7% before and after. Where infra overlaps, this is demonstrably wrong rather than
+  merely odd: Dec-2022 reads 3.76% in malls against 6.06% in infra. For the index the damage is
+  confined to **Apr–Nov 2022**, the window where malls is the only available source; from
+  Dec-2022 the index switches to infra. The IRR series themselves are unaffected.
 - **Spreads are percentage points.** Formatted as `%`, but they are the difference between two
   rates: `+7.34%` means 7.34 p.p. over the bond.
 - **Values, not live formulas.** Derived figures are written as computed values. The raw sheets
