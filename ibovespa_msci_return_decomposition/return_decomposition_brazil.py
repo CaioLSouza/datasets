@@ -229,15 +229,61 @@ def read_supplied_workbook(
     return {series_name: raw}
 
 
+def _normalize_bloomberg_return_field(series: pd.Series) -> pd.Series:
+    result = pd.to_numeric(series, errors="coerce")
+    if result.dropna().abs().quantile(0.95) > 0.50:
+        result = result / 100.0
+    return result
+
+
+def _total_index_has_dividend_signal(
+    total_index: pd.Series,
+    price_index: pd.Series,
+    dividend_yield: pd.Series,
+) -> bool:
+    common = pd.concat(
+        [total_index.rename("total"), price_index.rename("price")], axis=1
+    ).dropna()
+    if len(common) < 126:
+        return False
+    relative = (
+        (common["total"].iloc[-1] / common["total"].iloc[0])
+        / (common["price"].iloc[-1] / common["price"].iloc[0])
+        - 1.0
+    )
+    median_yield = pd.to_numeric(dividend_yield, errors="coerce").median()
+    if pd.notna(median_yield) and median_yield > 0.10:
+        return relative > 0.002
+    return abs(relative) > 0.0005
+
+
+def _daily_total_return_has_dividend_signal(
+    daily_total_return: pd.Series,
+    price_index: pd.Series,
+    dividend_yield: pd.Series,
+) -> bool:
+    direct = _normalize_bloomberg_return_field(daily_total_return)
+    price_return = price_index.pct_change(fill_method=None)
+    common = pd.concat(
+        [direct.rename("total"), price_return.rename("price")], axis=1
+    ).dropna()
+    if len(common) < 126:
+        return False
+    implied_dividend = (common["total"] - common["price"]).sum()
+    median_yield = pd.to_numeric(dividend_yield, errors="coerce").median()
+    if pd.notna(median_yield) and median_yield > 0.10:
+        return implied_dividend > 0.002
+    return abs(implied_dividend) > 0.0005
+
+
 def read_bloomberg_formula_workbook(
     workbook: Path,
 ) -> Dict[str, pd.DataFrame]:
     """
     Read cached values from the workbook after Bloomberg Excel refresh + save.
 
-    MSCI sheets use two Bloomberg blocks:
-      A:E = gross total return index
-      F:J = price return index
+    MSCI sheets use only the price-index ticker. They request total-return
+    fields on that ticker and historical dividend yield as a fallback.
 
     IBOV uses one block:
       A:E = date, total-return level, P/E, daily dividend points, dividend yield
@@ -297,18 +343,82 @@ def read_bloomberg_formula_workbook(
                     "returned valid cached data."
                 )
         else:
-            required = ["LAST_PRICE", "LAST_PRICE.1", "PE_RATIO"]
+            required = ["LAST_PRICE", "MSCI_DVD_YLD", "PE_RATIO"]
             absent = [field for field in required if field not in data.columns]
             if absent:
                 raise ValueError(f"{sheet}: missing Bloomberg fields {absent}")
-            raw["total_level"] = pd.to_numeric(
+
+            raw["price_level"] = pd.to_numeric(
                 data["LAST_PRICE"], errors="coerce"
             )
-            raw["price_level"] = pd.to_numeric(
-                data["LAST_PRICE.1"], errors="coerce"
-            )
             raw["pe"] = pd.to_numeric(data["PE_RATIO"], errors="coerce")
-            raw["dividend_method"] = "total_return_minus_price_return"
+            raw["dividend_yield"] = pd.to_numeric(
+                data["MSCI_DVD_YLD"], errors="coerce"
+            )
+            dividend_points = (
+                pd.to_numeric(
+                    data["INDX_GROSS_DAILY_DIV"], errors="coerce"
+                )
+                if "INDX_GROSS_DAILY_DIV" in data.columns
+                else pd.Series(index=data.index, dtype=float)
+            )
+
+            total_index = (
+                pd.to_numeric(
+                    data["TOT_RETURN_INDEX_GROSS_DVDS"], errors="coerce"
+                )
+                if "TOT_RETURN_INDEX_GROSS_DVDS" in data.columns
+                else pd.Series(index=data.index, dtype=float)
+            )
+            daily_total_return = (
+                pd.to_numeric(
+                    data["DAY_TO_DAY_TOT_RETURN_GROSS_DVDS"],
+                    errors="coerce",
+                )
+                if "DAY_TO_DAY_TOT_RETURN_GROSS_DVDS" in data.columns
+                else pd.Series(index=data.index, dtype=float)
+            )
+
+            if (
+                total_index.notna().sum() >= 126
+                and total_index.nunique(dropna=True) > 20
+                and _total_index_has_dividend_signal(
+                    total_index, raw["price_level"], raw["dividend_yield"]
+                )
+            ):
+                raw["total_level"] = total_index
+                raw["dividend_method"] = (
+                    "TOT_RETURN_INDEX_GROSS_DVDS_ON_PRICE_TICKER"
+                )
+            elif (
+                daily_total_return.notna().sum() >= 126
+                and _daily_total_return_has_dividend_signal(
+                    daily_total_return,
+                    raw["price_level"],
+                    raw["dividend_yield"],
+                )
+            ):
+                raw["total_return_direct"] = daily_total_return
+                raw["dividend_method"] = (
+                    "DAY_TO_DAY_TOT_RETURN_GROSS_DVDS_ON_PRICE_TICKER"
+                )
+            elif (
+                dividend_points.notna().sum() >= 126
+                and dividend_points.fillna(0).clip(lower=0).sum() > 0
+            ):
+                raw["dividend_points"] = dividend_points
+                raw["dividend_method"] = (
+                    "INDX_GROSS_DAILY_DIV_ON_PRICE_TICKER"
+                )
+            elif raw["dividend_yield"].notna().sum() >= 126:
+                raw["dividend_method"] = (
+                    "MSCI_DVD_YLD/252_APPROXIMATION"
+                )
+            else:
+                raise ValueError(
+                    f"{sheet}: no total-return field and insufficient "
+                    "historical MSCI_DVD_YLD data."
+                )
 
         raw = raw[~raw.index.duplicated(keep="last")].sort_index()
         raw_by_series[series_name] = raw
@@ -319,7 +429,6 @@ def calculate_daily_components(
     raw: pd.DataFrame, pe_window: int = 21, pe_lag: int = 21
 ) -> pd.DataFrame:
     data = raw.copy()
-    data["total_return"] = data["total_level"].pct_change(fill_method=None)
 
     method_values = (
         data["dividend_method"].dropna().astype(str).unique().tolist()
@@ -328,21 +437,49 @@ def calculate_daily_components(
     )
     method = method_values[0] if method_values else ""
 
-    if method == "total_return_minus_price_return":
+    if method in {
+        "total_return_minus_price_return",
+        "TOT_RETURN_INDEX_GROSS_DVDS_ON_PRICE_TICKER",
+    }:
+        data["total_return"] = data["total_level"].pct_change(fill_method=None)
         data["price_return"] = data["price_level"].pct_change(fill_method=None)
         data["dividends"] = data["total_return"] - data["price_return"]
+    elif method == "DAY_TO_DAY_TOT_RETURN_GROSS_DVDS_ON_PRICE_TICKER":
+        direct = _normalize_bloomberg_return_field(
+            data["total_return_direct"]
+        )
+        data["total_return"] = direct
+        data["price_return"] = data["price_level"].pct_change(fill_method=None)
+        data["dividends"] = data["total_return"] - data["price_return"]
+    elif method == "INDX_GROSS_DAILY_DIV_ON_PRICE_TICKER":
+        data["price_return"] = data["price_level"].pct_change(fill_method=None)
+        data["dividends"] = data["dividend_points"].fillna(0).div(
+            data["price_level"].shift(1)
+        )
+        data["total_return"] = data["price_return"] + data["dividends"]
     elif method == "INDX_GROSS_DAILY_DIV":
+        data["total_return"] = data["total_level"].pct_change(fill_method=None)
         data["dividends"] = data["dividend_points"].fillna(0).div(
             data["total_level"].shift(1)
         )
         data["price_return"] = data["total_return"] - data["dividends"]
     elif method == "DIV_YIELD/252_APPROXIMATION":
+        data["total_return"] = data["total_level"].pct_change(fill_method=None)
         # Bloomberg dividend-yield fields are normally percentage points.
         dy = pd.to_numeric(data["dividend_yield"], errors="coerce")
         if dy.dropna().median() > 1:
             dy = dy / 100.0
         data["dividends"] = (1.0 + dy.clip(lower=0.0)) ** (1.0 / 252.0) - 1.0
         data["price_return"] = data["total_return"] - data["dividends"]
+    elif method == "MSCI_DVD_YLD/252_APPROXIMATION":
+        data["price_return"] = data["price_level"].pct_change(fill_method=None)
+        dy = pd.to_numeric(data["dividend_yield"], errors="coerce")
+        if dy.dropna().median() > 1:
+            dy = dy / 100.0
+        data["dividends"] = (
+            1.0 + dy.shift(1).clip(lower=0.0)
+        ) ** (1.0 / 252.0) - 1.0
+        data["total_return"] = data["price_return"] + data["dividends"]
     else:
         raise ValueError(f"Unsupported dividend calculation method: {method}")
 
@@ -815,7 +952,13 @@ def run(args: argparse.Namespace) -> None:
         },
         {
             "item": "MSCI dividend source",
-            "value": "Gross total return index minus price return index.",
+            "value": (
+                "Hierarchy on the price-index ticker: "
+                "TOT_RETURN_INDEX_GROSS_DVDS; then "
+                "DAY_TO_DAY_TOT_RETURN_GROSS_DVDS; then historical "
+                "INDX_GROSS_DAILY_DIV; then historical MSCI_DVD_YLD/252 "
+                "approximation."
+            ),
         },
         {
             "item": "Failed series",
@@ -879,4 +1022,3 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     run(parse_args())
-
