@@ -6,17 +6,21 @@ the user:
 
     daily total return
       = daily dividend contribution
-      + daily implied earnings growth
+      + daily implied forward earnings growth
       + daily multiple expansion
 
 Multiple expansion is calculated from a 21-day moving average of P/E versus
 the same moving average 21 trading days earlier, converted into a daily rate.
-Earnings growth is the residual.
+Forward earnings growth is the residual.
 
-For annual, YTD and trailing-12-month tables, valuation is instead measured
-directly from the P/E at the period boundaries. This makes the reported
-re-rating auditable against Bloomberg. The other period components are
-residualized so that they add exactly to total return.
+All valuation calculations use Bloomberg's forward consensus P/E
+(`BEST_PE_RATIO`) exclusively. For annual, YTD and trailing-12-month tables,
+valuation is measured directly from the forward P/E at the period boundaries.
+This makes the reported re-rating auditable against Bloomberg. The other
+period components are residualized so that they add exactly to total return.
+
+The module is notebook-friendly. Import and call ``run_decomposition(...)``;
+command-line execution remains available through ``main()``.
 """
 
 from __future__ import annotations
@@ -24,11 +28,13 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 
 import matplotlib
 
-matplotlib.use("Agg")
+if "ipykernel" not in sys.modules:
+    matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -52,7 +58,7 @@ DEFAULT_OUTPUT = DEFAULT_INPUT.parent / "results_ibov_msci_brazil"
 LABELS = {
     "total_return": "Total return",
     "dividends": "Dividends",
-    "earnings_growth": "Earnings growth",
+    "earnings_growth": "Forward earnings growth",
     "valuation": "Valuation",
 }
 
@@ -85,7 +91,7 @@ def read_bloomberg_workbook(workbook: Path) -> dict[str, pd.DataFrame]:
     output: dict[str, pd.DataFrame] = {}
 
     msci = _read_sheet(workbook, "MSCI Brazil")
-    required_msci = ["LAST_PRICE", "PE_RATIO"]
+    required_msci = ["LAST_PRICE", "BEST_PE_RATIO"]
     missing_msci = [c for c in required_msci if c not in msci.columns]
     if missing_msci:
         raise ValueError(f"MSCI Brazil: missing fields {missing_msci}")
@@ -124,14 +130,27 @@ def read_bloomberg_workbook(workbook: Path) -> dict[str, pd.DataFrame]:
             "MSCI Brazil: insufficient refreshed Bloomberg data. Open the "
             "workbook in Bloomberg Excel, refresh, wait, save and close it."
         )
-    msci_raw["pe"] = pd.to_numeric(msci["PE_RATIO"], errors="coerce")
+    forward_pe_candidates = [
+        field
+        for field in ["BEST_PE_RATIO.1", "BEST_PE_RATIO"]
+        if field in msci.columns
+    ]
+    forward_pe_field = max(
+        forward_pe_candidates,
+        key=lambda field: pd.to_numeric(
+            msci[field], errors="coerce"
+        ).notna().sum(),
+    )
+    msci_raw["forward_pe"] = pd.to_numeric(
+        msci[forward_pe_field], errors="coerce"
+    )
     msci_raw["dividend_method"] = "total_return_minus_price_return"
     output["MSCI Brazil"] = msci_raw
 
     ibov = _read_sheet(workbook, "IBOV")
     required_ibov = [
         "LAST_PRICE",
-        "PE_RATIO",
+        "BEST_PE_RATIO",
         "INDX_GROSS_DAILY_DIV",
         "DIV_YIELD",
     ]
@@ -142,7 +161,9 @@ def read_bloomberg_workbook(workbook: Path) -> dict[str, pd.DataFrame]:
     ibov_raw["total_level"] = pd.to_numeric(
         ibov["LAST_PRICE"], errors="coerce"
     )
-    ibov_raw["pe"] = pd.to_numeric(ibov["PE_RATIO"], errors="coerce")
+    ibov_raw["forward_pe"] = pd.to_numeric(
+        ibov["BEST_PE_RATIO"], errors="coerce"
+    )
     ibov_raw["dividend_points"] = pd.to_numeric(
         ibov["INDX_GROSS_DAILY_DIV"], errors="coerce"
     )
@@ -195,10 +216,12 @@ def decompose_daily(
     else:
         raise ValueError(f"Unsupported dividend method: {method}")
 
-    pe = pd.to_numeric(data["pe"], errors="coerce")
-    pe_ma = pe.rolling(pe_window, min_periods=pe_window).mean()
-    data["pe_21d_ma"] = pe_ma
-    pe_change = pe_ma.div(pe_ma.shift(pe_lag)) - 1.0
+    forward_pe = pd.to_numeric(data["forward_pe"], errors="coerce")
+    forward_pe_ma = forward_pe.rolling(
+        pe_window, min_periods=pe_window
+    ).mean()
+    data["forward_pe_21d_ma"] = forward_pe_ma
+    pe_change = forward_pe_ma.div(forward_pe_ma.shift(pe_lag)) - 1.0
     pe_change = pe_change.where(1.0 + pe_change > 0)
     data["valuation"] = (1.0 + pe_change) ** (1.0 / pe_lag) - 1.0
     data["earnings_growth"] = (
@@ -233,8 +256,9 @@ def endpoint_period_decomposition(
     """Build an intuitive, exactly additive period attribution.
 
     Period returns start on the first date in ``group`` and therefore use the
-    latest P/E observation strictly before that date as the initial multiple.
-    With endpoint_window=1, valuation is exactly PE_end / PE_start - 1.
+    latest forward P/E observation strictly before that date as the initial
+    multiple. With endpoint_window=1, valuation is exactly
+    Forward_PE_end / Forward_PE_start - 1.
     """
     if group.empty:
         raise ValueError("Cannot decompose an empty period")
@@ -243,24 +267,31 @@ def endpoint_period_decomposition(
 
     first_return_date = group.index.min()
     end_date = group.index.max()
-    pe = pd.to_numeric(full_data["pe"], errors="coerce").dropna()
-    start_sample = pe.loc[pe.index < first_return_date].tail(endpoint_window)
-    end_sample = pe.loc[pe.index <= end_date].tail(endpoint_window)
+    forward_pe = pd.to_numeric(
+        full_data["forward_pe"], errors="coerce"
+    ).dropna()
+    start_sample = forward_pe.loc[
+        forward_pe.index < first_return_date
+    ].tail(endpoint_window)
+    end_sample = forward_pe.loc[
+        forward_pe.index <= end_date
+    ].tail(endpoint_window)
     if start_sample.empty or end_sample.empty:
         raise ValueError(
-            f"Insufficient P/E endpoint data for {first_return_date:%Y-%m-%d} "
+            "Insufficient forward P/E endpoint data for "
+            f"{first_return_date:%Y-%m-%d} "
             f"to {end_date:%Y-%m-%d}"
         )
 
-    pe_start = float(start_sample.mean())
-    pe_end = float(end_sample.mean())
-    if pe_start <= 0 or pe_end <= 0:
-        raise ValueError("P/E endpoint values must be positive")
+    forward_pe_start = float(start_sample.mean())
+    forward_pe_end = float(end_sample.mean())
+    if forward_pe_start <= 0 or forward_pe_end <= 0:
+        raise ValueError("Forward P/E endpoint values must be positive")
 
     total_return = float((1.0 + group["total_return"]).prod() - 1.0)
     price_return = float((1.0 + group["price_return"]).prod() - 1.0)
     dividends = total_return - price_return
-    valuation = pe_end / pe_start - 1.0
+    valuation = forward_pe_end / forward_pe_start - 1.0
     earnings_growth = price_return - valuation
     component_sum = dividends + earnings_growth + valuation
 
@@ -273,12 +304,15 @@ def endpoint_period_decomposition(
             "valuation": valuation,
             "component_sum": component_sum,
             "compounding_residual": total_return - component_sum,
-            "pe_start": pe_start,
-            "pe_end": pe_end,
-            "pe_direct_change": pe_end / pe_start - 1.0,
-            "valuation_audit_error": valuation - (pe_end / pe_start - 1.0),
-            "pe_start_date": start_sample.index.max(),
-            "pe_end_date": end_sample.index.max(),
+            "forward_pe_start": forward_pe_start,
+            "forward_pe_end": forward_pe_end,
+            "forward_pe_direct_change": (
+                forward_pe_end / forward_pe_start - 1.0
+            ),
+            "valuation_audit_error": valuation
+            - (forward_pe_end / forward_pe_start - 1.0),
+            "forward_pe_start_date": start_sample.index.max(),
+            "forward_pe_end_date": end_sample.index.max(),
             "endpoint_window": endpoint_window,
         }
     )
@@ -319,7 +353,7 @@ def build_annual(
                     data, group, endpoint_window=endpoint_window
                 )
             except ValueError as exc:
-                if "Insufficient P/E endpoint data" in str(exc):
+                if "Insufficient forward P/E endpoint data" in str(exc):
                     # The first partial calendar year can lack a prior
                     # observation after the historical warm-up period.
                     continue
@@ -382,12 +416,12 @@ def build_valuation_audit(
         "period",
         "start_date",
         "end_date",
-        "pe_start_date",
-        "pe_end_date",
+        "forward_pe_start_date",
+        "forward_pe_end_date",
         "endpoint_window",
-        "pe_start",
-        "pe_end",
-        "pe_direct_change",
+        "forward_pe_start",
+        "forward_pe_end",
+        "forward_pe_direct_change",
         "valuation",
         "valuation_audit_error",
         "total_return",
@@ -553,8 +587,8 @@ def save_workbook(
             [
                 "total_return",
                 "price_return",
-                "pe",
-                "pe_21d_ma",
+                "forward_pe",
+                "forward_pe_21d_ma",
                 "dividends",
                 "earnings_growth",
                 "valuation",
@@ -567,27 +601,31 @@ def save_workbook(
         [
             {
                 "item": "Daily identity",
-                "value": "Total return = dividends + implied earnings growth + valuation",
+                "value": "Total return = dividends + implied forward earnings growth + valuation",
             },
             {
                 "item": "Historical valuation",
-                "value": "21-day average P/E change versus 21 trading days earlier, converted to daily rate",
+                "value": "21-day average Bloomberg BEST_PE_RATIO change versus 21 trading days earlier, converted to daily rate",
             },
             {
                 "item": "Annual / YTD / trailing 12M valuation",
-                "value": "P/E at the end of the period divided by P/E immediately before the first return date, minus one",
+                "value": "Forward 12M P/E at the end of the period divided by forward 12M P/E immediately before the first return date, minus one",
             },
             {
                 "item": "Period dividends",
                 "value": "Compounded total return minus compounded price return",
             },
             {
-                "item": "Period earnings growth",
-                "value": "Compounded price return minus endpoint valuation contribution; includes the valuation/earnings interaction",
+                "item": "Period forward earnings growth",
+                "value": "Compounded price return minus endpoint forward-P/E valuation contribution; includes the valuation/earnings interaction",
             },
             {
                 "item": "Period aggregation",
-                "value": "Dividends + earnings growth + valuation equals total return exactly",
+                "value": "Dividends + forward earnings growth + valuation equals total return exactly",
+            },
+            {
+                "item": "P/E basis",
+                "value": "Bloomberg BEST_PE_RATIO only; trailing PE_RATIO is rejected",
             },
         ]
     )
@@ -604,7 +642,7 @@ def save_workbook(
         methodology.to_excel(writer, sheet_name="Methodology", index=False)
 
 
-def run(args: argparse.Namespace) -> None:
+def run(args: argparse.Namespace) -> dict[str, object]:
     output_dir = Path(args.output).resolve()
     history_chart_dir = output_dir / "charts" / "history"
     annual_chart_dir = output_dir / "charts" / "annual"
@@ -684,21 +722,74 @@ def run(args: argparse.Namespace) -> None:
             valuation_audit["valuation_audit_error"].abs().max()
         ),
         "endpoint_window": args.endpoint_window,
+        "pe_basis": "Bloomberg BEST_PE_RATIO (forward consensus P/E)",
         "note": (
             "Historical lines retain the original smoothed daily methodology. "
-            "Annual, YTD and trailing-12-month valuation use P/E endpoints and "
-            "period components reconcile exactly to total return."
+            "Annual, YTD and trailing-12-month valuation use forward P/E "
+            "endpoints and period components reconcile exactly to total return."
         ),
     }
     (output_dir / "validation.json").write_text(
         json.dumps(validation, indent=2), encoding="utf-8"
     )
-    print(json.dumps(validation, indent=2))
+    if getattr(args, "verbose", True):
+        print(json.dumps(validation, indent=2))
+
+    return {
+        "daily": daily,
+        "history": history,
+        "annual": annual,
+        "periods": periods,
+        "valuation_audit": valuation_audit,
+        "validation": validation,
+        "output_dir": output_dir,
+        "output_workbook": (
+            output_dir / "return_decomposition_ibov_msci_brazil.xlsx"
+        ),
+    }
 
 
-def parse_args() -> argparse.Namespace:
+def run_decomposition(
+    input_path: str | Path = DEFAULT_INPUT,
+    output_dir: str | Path = DEFAULT_OUTPUT,
+    *,
+    analysis_start: str = "2005-01-01",
+    pe_window: int = 21,
+    pe_lag: int = 21,
+    endpoint_window: int = 1,
+    min_observations: int = 126,
+    verbose: bool = True,
+) -> dict[str, object]:
+    r"""Run the full workflow from Python or a Jupyter notebook.
+
+    Example
+    -------
+    >>> from return_decomposition_ibov_msci_brazil import run_decomposition
+    >>> result = run_decomposition(
+    ...     input_path=r"\\server\folder\bloomberg_input.xlsx",
+    ...     output_dir=r"\\server\folder\results",
+    ... )
+    >>> result["periods"]
+    """
+    args = argparse.Namespace(
+        input=str(input_path),
+        output=str(output_dir),
+        analysis_start=analysis_start,
+        pe_window=pe_window,
+        pe_lag=pe_lag,
+        endpoint_window=endpoint_window,
+        min_observations=min_observations,
+        verbose=verbose,
+    )
+    return run(args)
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Ibovespa and MSCI Brazil legacy return decomposition"
+        description=(
+            "Ibovespa and MSCI Brazil return decomposition using Bloomberg "
+            "forward consensus P/E"
+        )
     )
     parser.add_argument(
         "--input",
@@ -718,13 +809,19 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=1,
         help=(
-            "Number of P/E observations averaged at each period endpoint. "
+            "Number of forward P/E observations averaged at each period endpoint. "
             "Default 1 matches the Bloomberg point-to-point re-rating."
         ),
     )
     parser.add_argument("--min-observations", type=int, default=126)
-    return parser.parse_args()
+    parser.set_defaults(verbose=True)
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> dict[str, object]:
+    """Command-line entry point."""
+    return run(parse_args(argv))
 
 
 if __name__ == "__main__":
-    run(parse_args())
+    main()
