@@ -91,10 +91,18 @@ PARAMS = [
      'BEST_FPERIOD_OVERRIDE. "BF" is blended forward 12m, which rolls continuously and is the right '
      'choice for a revision. A fixed year ("2027") also works. Leaving it unpinned would compare '
      'different fiscal years and produce a meaningless revision at every annual roll.'),
-    ('Total return field', 'CUST_TRR_RETURN_HOLDING_PER', None, 'FldTRR',
-     'Total return over a custom window, driven by the two date overrides. Includes dividends, which is '
-     'the correct momentum measure. If your terminal rejects it, try CHG_PCT_3M / CHG_PCT_6M instead '
-     '(price only, fixed windows).'),
+    ('Momentum method', 'TR_INDEX', None, 'MomMethod',
+     'TR_INDEX (default) reads a total-return index level at two dates with BDH and takes the ratio — '
+     'it uses only the same BDH machinery the EPS revisions already rely on. CUST_TRR makes one BDP '
+     'call with custom date overrides instead. Switch here if the Diagnostics sheet says the other '
+     'one works on your terminal.'),
+    ('Total-return index field', 'TOT_RETURN_INDEX_GROSS_DVDS', None, 'FldTRIdx',
+     'Used by the TR_INDEX method. A long-standing field: the level of a gross-dividend total-return '
+     'index, so the ratio of two dates is the total return between them.'),
+    ('Custom total return field', 'CUST_TRR_RETURN_HOLDING_PER', None, 'FldTRR',
+     'Used only by the CUST_TRR method. Entitlement-sensitive, and the override names vary between '
+     'setups — this is the likeliest thing to fail. CHG_PCT_3M / CHG_PCT_6M are a cruder fallback '
+     '(price only, fixed windows that ignore the date inputs above).'),
     ('WEIGHTING', None, None, None, None),
     ('Weighting basis', 'SEC_CAP', None, 'WgtBasis',
      'SEC_CAP = shares outstanding x price, i.e. the market cap of THIS listed line. '
@@ -118,6 +126,8 @@ for lab, val, nf, nm, note in PARAMS:
 
 dv = DataValidation(type='list', formula1='"SEC_CAP,COMPANY_CAP"', allow_blank=False)
 ws.add_data_validation(dv); dv.add(ws.cell(NAMED['WgtBasis'], 3))
+dvm = DataValidation(type='list', formula1='"TR_INDEX,CUST_TRR"', allow_blank=False)
+ws.add_data_validation(dvm); dvm.add(ws.cell(NAMED['MomMethod'], 3))
 
 # derived lookback dates
 r += 1
@@ -185,11 +195,12 @@ ws.cell(2,1,'Purple cells call Bloomberg. Grey columns from Q onward are aggrega
             'grouped and hidden, and can be ignored.').font = F_N
 COLS = ['Ticker','Sector','Bloomberg ticker','Company mkt cap','Shares out (mm)','Price',
         'Security mkt cap','Weight used','Fwd EPS now','Fwd EPS at A','Fwd EPS at B',
-        'Earnings rev. A','Earnings rev. B','Momentum A','Momentum B','Data flag']
+        'Earnings rev. A','Earnings rev. B','TR index now','TR index at A','TR index at B',
+        'Momentum A','Momentum B','Data flag']
 HELP = ['mapped','w·revA','w revA','w·revB','w revB','w·momA','w momA','w·momB','w momB','sector #']
-head(ws, 4, COLS + HELP, [13,24,19,15,13,10,15,15,12,12,12,13,13,12,12,30] + [11]*10,
+head(ws, 4, COLS + HELP, [13,24,19,15,13,10,15,15,12,12,12,13,13,13,13,13,12,12,30] + [11]*10,
      groups=[('IDENTITY',1,3), ('SIZE',4,8), ('EARNINGS REVISIONS',9,13),
-             ('MOMENTUM',14,15), ('QUALITY',16,16), ('AGGREGATION HELPERS',17,26)])
+             ('MOMENTUM',14,18), ('QUALITY',19,19), ('AGGREGATION HELPERS',20,29)])
 ws.freeze_panes = 'C5'
 DR0, DR1 = 5, 4 + NROW
 for i in range(NROW):
@@ -213,30 +224,35 @@ for i in range(NROW):
             f'"BEST_FPERIOD_OVERRIDE="&FpOvr,"Days=A","Fill=P"),1,1),""))', NUM2, F_BBG)
     put(ws, r, 12, f'=IFERROR(IF($J{r}<=0,"",$I{r}/$J{r}-1),"")', PCT1, F_K)
     put(ws, r, 13, f'=IFERROR(IF($K{r}<=0,"",$I{r}/$K{r}-1),"")', PCT1, F_K)
-    for col, dt in [(14,'DtMomA'), (15,'DtMomB')]:
+    # total-return index level at three dates, same BDH shape as the EPS block above
+    for col, dt in [(14,'AsOf'), (15,'DtMomA'), (16,'DtMomB')]:
         put(ws, r, col,
-            f'=IF({blank},"",IFERROR(BDP($C{r},FldTRR,'
-            f'"CUST_TRR_START_DT="&TEXT({dt},"yyyymmdd"),'
-            f'"CUST_TRR_END_DT="&TEXT(AsOf,"yyyymmdd"))/100,""))', PCT1, F_BBG)
-    put(ws, r, 16,
-        f'=IF($A{r}="","",IF($Q{r}=0,"sector missing",'
+            f'=IF(OR({blank},MomMethod<>"TR_INDEX"),"",IFERROR(INDEX(BDH($C{r},FldTRIdx,'
+            f'{dt},{dt},"Days=A","Fill=P"),1,1),""))', NUM2, F_BBG)
+    for col, base, dt in [(17,'O','DtMomA'), (18,'P','DtMomB')]:
+        put(ws, r, col,
+            f'=IF({blank},"",IF(MomMethod="TR_INDEX",IFERROR(IF(${base}{r}<=0,"",$N{r}/${base}{r}-1),""),'
+            f'IFERROR(BDP($C{r},FldTRR,"CUST_TRR_START_DT="&TEXT({dt},"yyyymmdd"),'
+            f'"CUST_TRR_END_DT="&TEXT(AsOf,"yyyymmdd"))/100,"")))', PCT1, F_K)
+    put(ws, r, 19,
+        f'=IF($A{r}="","",IF($T{r}=0,"sector missing",'
         f'IF(NOT(ISNUMBER($H{r})),"no market cap",'
-        f'IF(COUNT($L{r}:$O{r})=4,"complete",'
-        f'"missing "&(4-COUNT($L{r}:$O{r}))&" of 4 factors"))))', None, F_N)
+        f'IF(COUNT($L{r}:$M{r},$Q{r}:$R{r})=4,"complete",'
+        f'"missing "&(4-COUNT($L{r}:$M{r},$Q{r}:$R{r}))&" of 4 factors"))))', None, F_N)
     # one central "is this row usable" flag, so every downstream guard shares the same definition
-    put(ws, r, 17, f'=IF(OR($B{r}="",$B{r}="NO SECTOR",$B{r}="NOT IN MAP"),0,1)', NUM0, F_N, FHLP)
+    put(ws, r, 20, f'=IF(OR($B{r}="",$B{r}="NO SECTOR",$B{r}="NOT IN MAP"),0,1)', NUM0, F_N, FHLP)
     # numerator / denominator per metric, zero unless the metric, the weight and the sector are all good
-    for k, mcol in enumerate(['L','M','N','O']):
-        ok = f'AND($Q{r}=1,ISNUMBER(${mcol}{r}),ISNUMBER($H{r}))'
-        put(ws, r, 18+2*k, f'=IF({ok},${mcol}{r}*$H{r},0)', NUM2, F_N, FHLP)
-        put(ws, r, 19+2*k, f'=IF({ok},$H{r},0)', NUM0, F_N, FHLP)
-    put(ws, r, 26,
-        f'=IF($Q{r}=0,"",IF(COUNTIF($B${DR0}:$B{r},$B{r})>1,"",'
-        + (f'MAX(0,MAX($Z${DR0}:$Z{r-1}))+1))' if i else '1))'), NUM0, F_N, FHLP)
-for c in range(17, 27):
+    for k, mcol in enumerate(['L','M','Q','R']):
+        ok = f'AND($T{r}=1,ISNUMBER(${mcol}{r}),ISNUMBER($H{r}))'
+        put(ws, r, 21+2*k, f'=IF({ok},${mcol}{r}*$H{r},0)', NUM2, F_N, FHLP)
+        put(ws, r, 22+2*k, f'=IF({ok},$H{r},0)', NUM0, F_N, FHLP)
+    put(ws, r, 29,
+        f'=IF($T{r}=0,"",IF(COUNTIF($B${DR0}:$B{r},$B{r})>1,"",'
+        + (f'MAX(0,MAX($AC${DR0}:$AC{r-1}))+1))' if i else '1))'), NUM0, F_N, FHLP)
+for c in range(20, 30):
     ws.column_dimensions[L(c)].outline_level = 1
     ws.column_dimensions[L(c)].hidden = True
-ws.conditional_formatting.add(f'$P${DR0}:$P${DR1}',
+ws.conditional_formatting.add(f'$S${DR0}:$S${DR1}',
     CellIsRule(operator='equal', formula=['"complete"'], font=Font(name=A, size=9, color='548235')))
 
 # ==================================================================== Sector Aggregation
@@ -250,12 +266,12 @@ head(ws, 3, ['Sector','Names','Total mkt cap','Share of index','Earnings rev. A'
      [26,8,17,13,14,14,13,13,10,10,10,10])
 ws.freeze_panes = 'B4'
 SB, SW = f"'{SH_DATA}'!$B${DR0}:$B${DR1}", f"'{SH_DATA}'!$H${DR0}:$H${DR1}"
-HN = {k: f"'{SH_DATA}'!${L(18+2*k)}${DR0}:${L(18+2*k)}${DR1}" for k in range(4)}
-HD = {k: f"'{SH_DATA}'!${L(19+2*k)}${DR0}:${L(19+2*k)}${DR1}" for k in range(4)}
+HN = {k: f"'{SH_DATA}'!${L(21+2*k)}${DR0}:${L(21+2*k)}${DR1}" for k in range(4)}
+HD = {k: f"'{SH_DATA}'!${L(22+2*k)}${DR0}:${L(22+2*k)}${DR1}" for k in range(4)}
 for i in range(NSEC):
     r = S0 + i
     put(ws, r, 1, f"=IFERROR(INDEX('{SH_DATA}'!$B${DR0}:$B${DR1},"
-                  f"MATCH({i+1},'{SH_DATA}'!$Z${DR0}:$Z${DR1},0)),\"\")", None, F_K)
+                  f"MATCH({i+1},'{SH_DATA}'!$AC${DR0}:$AC${DR1},0)),\"\")", None, F_K)
     g = f'$A{r}=""'
     put(ws, r, 2, f'=IF({g},"",COUNTIF({SB},$A{r}))', NUM0)
     put(ws, r, 3, f'=IF({g},"",SUMIF({SB},$A{r},{SW}))', NUM0)
@@ -281,9 +297,84 @@ UNM = (f'(COUNTIF(\'{SH_DATA}\'!$B${DR0}:$B${DR1},"NO SECTOR")'
        f'+COUNTIF(\'{SH_DATA}\'!$B${DR0}:$B${DR1},"NOT IN MAP"))')
 put(ws, rc, 2, f'=IF({UNM}>0,{UNM}&" ticker(s) still have no sector — they are excluded from every '
                f'sector row AND from the index total above.",'
-               f'"All "&COUNTIF(\'{SH_DATA}\'!$Q${DR0}:$Q${DR1},1)&" tickers are mapped to a sector.")',
+               f'"All "&COUNTIF(\'{SH_DATA}\'!$T${DR0}:$T${DR1},1)&" tickers are mapped to a sector.")',
     None, F_K, FKEY)
 ws.merge_cells(start_row=rc, start_column=2, end_row=rc, end_column=8)
+
+# ==================================================================== Diagnostics
+SH_DIAG = 'Diagnostics'
+ws = wb.create_sheet(SH_DIAG)
+ws.cell(1,1,'Diagnostics — one ticker, no error handling').font = F_T
+ws.cell(2,1,'Every call below is deliberately RAW: no IFERROR, so you see exactly what Bloomberg '
+            'returns. Work down the list — the first row that fails tells you where the problem is.').font = F_N
+for col, w in [('A',4),('B',30),('C',22),('D',86)]:
+    ws.column_dimensions[col].width = w
+put(ws, 4, 2, 'Ticker under test', None, F_B)
+put(ws, 4, 3, f"=IFERROR(INDEX({MEMRNG},1)&TkSuffix,\"\")", None, F_K, FKEY)
+put(ws, 4, 4, 'First index member. If this is blank, the BDS call on Index Members is the problem, '
+              'not the fields.', None, F_N).alignment = WRAP
+TK = '$C$4'
+TESTS = [
+    ('LADDER — run down until one fails', None, None),
+    ('1. BDP works at all', f'=BDP({TK},"PX_LAST")',
+     'A bare BDP with no overrides. #NAME? here means the add-in is not loaded. Anything else and BDP is fine.'),
+    ('2. BDH works at all', f'=INDEX(BDH({TK},"PX_LAST",DtMomA,DtMomA,"Days=A","Fill=P"),1,1)',
+     'Historical single point. The EPS revisions depend on this shape, so if it works, revisions should too.'),
+    ('3. Override, "NAME=VALUE" style', f'=BDP({TK},"BEST_EPS","BEST_FPERIOD_OVERRIDE=BF")',
+     'The style used throughout the workbook. If this fails but test 4 works, your terminal wants paired '
+     'overrides and I need to rebuild the file that way — tell me.'),
+    ('4. Override, paired style', f'=BDP({TK},"BEST_EPS","BEST_FPERIOD_OVERRIDE","BF")',
+     'The alternative documented style: field name and value as separate arguments.'),
+    ('MOMENTUM — the field that failed', None, None),
+    ('5. TR index, current', f'=INDEX(BDH({TK},FldTRIdx,AsOf,AsOf,"Days=A","Fill=P"),1,1)',
+     'The new default method. Needs only BDH and a standard field.'),
+    ('6. TR index, lookback', f'=INDEX(BDH({TK},FldTRIdx,DtMomA,DtMomA,"Days=A","Fill=P"),1,1)',
+     'Same field at the lookback date. Rows 5 and 6 are what the workbook divides to get momentum.'),
+    ('7. Momentum from tests 5/6', '=IF(OR(NOT(ISNUMBER({T5})),NOT(ISNUMBER({T6})),{T6}<=0),'
+                                  '"cannot compute",{T5}/{T6}-1)',
+     'If this shows a plausible percentage, keep Momentum method = TR_INDEX and you are done.'),
+    ('8. CUST_TRR, "=" style', f'=BDP({TK},FldTRR,"CUST_TRR_START_DT="&TEXT(DtMomA,"yyyymmdd"),'
+                              f'"CUST_TRR_END_DT="&TEXT(AsOf,"yyyymmdd"))',
+     'The original approach that failed for you. Kept so you can see the actual message.'),
+    ('9. CUST_TRR, paired style', f'=BDP({TK},FldTRR,"CUST_TRR_START_DT",TEXT(DtMomA,"yyyymmdd"),'
+                                 f'"CUST_TRR_END_DT",TEXT(AsOf,"yyyymmdd"))',
+     'Same field, overrides passed as separate arguments. If THIS one works, tell me and I will switch '
+     'the workbook to paired overrides everywhere.'),
+    ('FALLBACKS — fixed windows', None, None),
+    ('10. CHG_PCT_3M', f'=BDP({TK},"CHG_PCT_3M")',
+     'Price-only return over a fixed 3-month window. Ignores the date inputs and excludes dividends.'),
+    ('11. CHG_PCT_6M', f'=BDP({TK},"CHG_PCT_6M")',
+     'Same for 6 months. If rows 10 and 11 work and nothing above does, we fall back to these and lose '
+     'both the dividend component and the configurable window.'),
+]
+# pass 1: work out which sheet row each numbered test lands on, so cross-references are never
+# hand-counted (getting this wrong is exactly the INDEX/MATCH class of bug this sheet exists to find)
+ROW_OF, _r = {}, 6
+for lab, f, _ in TESTS:
+    if f is not None and lab[0].isdigit():
+        ROW_OF[int(lab.split('.')[0])] = _r
+    _r += 1
+SUB = {f'T{k}': f'$C${v}' for k, v in ROW_OF.items()}
+
+# pass 2: write
+r = 6
+for lab, f, note in TESTS:
+    if f is None:
+        c = ws.cell(r, 2, lab); c.font, c.fill = F_SB, FSB
+        ws.cell(r, 3).fill = FSB; ws.cell(r, 4).fill = FSB
+        r += 1; continue
+    put(ws, r, 2, lab, None, F_B)
+    put(ws, r, 3, f.format(**SUB) if '{' in f else f, NUM2, F_BBG)
+    n = put(ws, r, 4, note, None, F_N); n.alignment = WRAP
+    ws.row_dimensions[r].height = 30
+    r += 1
+r += 1
+put(ws, r, 2, 'What to tell me', None, F_K)
+put(ws, r, 3, f'=IF(ISNUMBER($C${ROW_OF[7]}),"Nothing — TR_INDEX works, the workbook is already '
+              f'using it.","Which test numbers returned a number and which returned an error, '
+              f'plus the exact error text.")', None, F_K, FKEY)
+ws.merge_cells(start_row=r, start_column=3, end_row=r, end_column=4)
+print('diagnostic test rows:', ROW_OF)
 
 # ==================================================================== Read me
 ws = wb.create_sheet(SH_READ, 0)
@@ -322,9 +413,15 @@ r = sect(r, 'THE FIELDS, AND WHY', [
                            'The fiscal period is pinned with BEST_FPERIOD_OVERRIDE (default "BF", blended '
                            'forward 12m). Without pinning it, every annual roll would compare two '
                            'different fiscal years and the "revision" would be an artefact.'),
-    ('Momentum', 'Total return over the window via CUST_TRR_RETURN_HOLDING_PER with explicit start and '
-                 'end date overrides. Total return rather than price return, so a large dividend is not '
-                 'read as a fall. Divided by 100 because the field returns percentage points.'),
+    ('Momentum', 'By default the ratio of a gross-dividend total-return index level at two dates, read '
+                 'with BDH — the same machinery the EPS revisions use. Total return rather than price '
+                 'return, so a large dividend is not misread as a fall. The alternative CUST_TRR method '
+                 'makes one BDP call with custom date overrides; switch on Inputs if your terminal '
+                 'prefers it.'),
+    ('If momentum errors', 'Go to the Diagnostics sheet. It runs the same calls for a single ticker with '
+                           'no error handling, so you see the real Bloomberg message, in an order that '
+                           'isolates the cause: add-in, then BDH, then override syntax, then the field '
+                           'itself. It ends by telling you what to report back.'),
     ('Market cap', 'Two are pulled. CUR_MKT_CAP is company-level, so for a name with both an ON and a PN '
                    'line in the index it reports the same number twice. Shares outstanding x price gives '
                    'the cap of the individual listed line. Weighting basis defaults to the latter — this '
@@ -359,7 +456,7 @@ r = sect(r, 'COLOUR KEY', [
 ], ht=18)
 
 del wb['Sheet']
-wb._sheets = [wb[n] for n in [SH_READ, SH_IN, SH_MAP, SH_DATA, SH_AGG, SH_MEM]]
+wb._sheets = [wb[n] for n in [SH_READ, SH_IN, SH_MAP, SH_DATA, SH_AGG, SH_MEM, SH_DIAG]]
 OUT = 'Ibovespa Factor Screen (BBG).xlsx'
 wb.save(OUT)
 print('saved', OUT)

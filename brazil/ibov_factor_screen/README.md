@@ -30,6 +30,7 @@ That is the whole workflow. Nothing else needs touching.
 | `Data` | One row per constituent: the five metrics plus flags and hidden aggregation helpers |
 | `Sector Aggregation` | Market-cap weighted average per sector, plus an index total |
 | `Index Members` | The single BDS call that feeds everything |
+| `Diagnostics` | Raw, unwrapped Bloomberg calls for one ticker, ordered to isolate a failure |
 
 ## Two decisions worth knowing about
 
@@ -43,6 +44,11 @@ same figure twice — weighting by it would count Petrobras or Itaú twice over.
 forward EPS at the lookback date. `BEST_FPERIOD_OVERRIDE` defaults to `BF` (blended forward 12m),
 which rolls continuously. Left unpinned, every annual fiscal roll would compare two different
 years and the "revision" would be an artefact of the roll rather than a change in estimates.
+
+**Momentum is a ratio of total-return index levels.** `TOT_RETURN_INDEX_GROSS_DVDS` read at two
+dates with `BDH`, divided. Total return rather than price return, so a large dividend is not
+misread as a fall, and the same `BDH` shape as the revisions rather than a second mechanism. The
+`Momentum method` input switches to a single `CUST_TRR` call with custom date overrides instead.
 
 ## Missing data cannot poison an aggregate
 
@@ -70,15 +76,33 @@ the mapping is anchored to it permanently, and any future entrant shows up as `N
 **Not verified: the Bloomberg calls.** This was built without terminal access, so not one of the
 961 BDP/BDH/BDS formulas has ever returned a value. Treat the first open as a test run.
 
-`CUST_TRR_RETURN_HOLDING_PER` is the field most likely to need adjustment — it is
-entitlement-sensitive and its override names vary between setups. If it fails, put `CHG_PCT_3M`
-in the total-return cell on `Inputs`, clear the date overrides, and accept price-only momentum
-over a fixed window. Also check two scale conventions on the first pull: whether `EQY_SH_OUT` is
-in millions on your terminal, and whether the return field gives `60` or `0.60` for 60%. The
-workbook assumes millions and divides the return by 100.
+Check two scale conventions on the first pull: whether `EQY_SH_OUT` is in millions on your
+terminal, and, if you switch to the `CUST_TRR` momentum method, whether that field gives `60` or
+`0.60` for 60%. The workbook assumes millions and divides the `CUST_TRR` result by 100.
 
 Every field mnemonic lives in a cell on `Inputs` precisely because of this uncertainty — a wrong
 mnemonic is a one-cell fix that propagates to all constituents, not a find-and-replace.
+
+### When something errors, use the Diagnostics sheet
+
+The workbook wraps its Bloomberg calls in `IFERROR` so one bad field cannot cascade — but that
+also swallows the message, which makes a failure impossible to diagnose. `Diagnostics` exists to
+undo that: it runs the same calls for a single ticker **raw**, in an order that isolates the cause.
+
+1. Does `BDP` resolve at all (add-in loaded)?
+2. Does `BDH` resolve?
+3. Does a `"NAME=VALUE"` override work?
+4. Does a paired `"NAME","VALUE"` override work instead?
+5–7. The total-return index at both dates, and the momentum they imply.
+8–9. `CUST_TRR_RETURN_HOLDING_PER` in both override styles.
+10–11. `CHG_PCT_3M` / `CHG_PCT_6M` as a last-resort fallback.
+
+The first row that fails names the problem. The sheet ends with a cell that says whether anything
+needs reporting back.
+
+**Momentum was originally built on `CUST_TRR_RETURN_HOLDING_PER` and that failed in practice.** The
+default is now `TR_INDEX`, which needs only `BDH` and `TOT_RETURN_INDEX_GROSS_DVDS` — the same
+machinery the EPS revisions already use successfully. `CUST_TRR` remains selectable on `Inputs`.
 
 **Verified: all the Excel-side logic.** A copy was built with only the Bloomberg calls replaced by
 synthetic values — deliberately including a zero base EPS, a missing momentum figure, and an
