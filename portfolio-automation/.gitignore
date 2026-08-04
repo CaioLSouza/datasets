@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Artefatos gerados pelo pipeline
+output/
+*.msg
+~$*.xlsx
+~$*.pptx
+
+# Configurações locais
+.env
+.idea/
+.vscode/
