@@ -8,12 +8,13 @@ necessário saber programar.
 O processo possui dois comandos:
 
 1. `portfolio_automation.py` lê as bases corporativas, calcula as carteiras,
-   gera os Excel e atualiza as Lâminas Comerciais.
+   gera os Excel, atualiza as Lâminas Comerciais e cria a Prestação de Contas
+   da Top Ações.
 2. `email_generator.py` usa esses Excel para criar `email_carteiras.msg`.
 
-O projeto mantém a **Lâmina Comercial**, mas não gera a lâmina completa
-auxiliar (`lamina_dados_*.xlsx`) nem a Prestação de Contas. O e-mail não é
-enviado automaticamente: ele é salvo para revisão.
+O projeto mantém a **Lâmina Comercial** e a **Prestação de Contas**, mas não
+gera a lâmina completa auxiliar (`lamina_dados_*.xlsx`). O e-mail não é enviado
+automaticamente: ele é salvo para revisão.
 
 ## 2. Antes de começar
 
@@ -22,6 +23,7 @@ Confirme:
 - Windows conectado à rede da empresa ou VPN;
 - acesso às pastas `\\xpdocs`;
 - Microsoft Outlook instalado e configurado;
+- Microsoft PowerPoint instalado;
 - Python instalado;
 - Excel e PowerPoint de saída fechados.
 
@@ -75,7 +77,7 @@ Instale as dependências:
 
 Isso normalmente é necessário apenas na primeira utilização.
 
-## 6. Conferir o template da Lâmina Comercial
+## 6. Conferir os templates dos PowerPoint
 
 Abra `xp_carteiras\monthly_config.py` e confira os nomes em
 `COMMERCIAL_TEMPLATE_FILES`. Eles devem ser idênticos aos arquivos existentes
@@ -83,7 +85,12 @@ na pasta de templates, incluindo mês, ano, acentos, espaços e `.pptx`.
 
 Altere somente o nome à direita dos dois-pontos. Não altere o nome da carteira.
 
-## 7. Executar os cálculos, Excel e Lâmina Comercial
+No mesmo arquivo, confira `ACCOUNTABILITY_TEMPLATE_FILES`. O projeto já inclui
+uma cópia de `Prestação de Contas - Top Ações - Julho 2026.pptx` na pasta
+`templates`. Se houver um arquivo com o mesmo nome na pasta corporativa de
+templates, o arquivo corporativo terá prioridade.
+
+## 7. Executar os cálculos, Excel e PowerPoint
 
 Confirme a VPN e feche arquivos de saída que estejam abertos. Execute:
 
@@ -111,6 +118,7 @@ Os nomes externos permanecem iguais aos do processo original.
 | Composição | `composicao_top_acoes.xlsx`, `composicao_top_dividendos.xlsx`, `composicao_top_small_caps.xlsx`, `composicao_esg.xlsx` |
 | Return attribution | `decomposicao_top_acoes.xlsx`, `decomposicao_top_dividendos.xlsx`, `decomposicao_top_small_caps.xlsx`, `decomposicao_esg.xlsx` |
 | Lâmina Comercial | `Lâmina Comercial - Top Ações.pptx`, `Lâmina Comercial - Top Dividendos.pptx`, `Lâmina Comercial - Top Small Caps.pptx` |
+| Prestação de Contas | `Prestação de Contas - Top Ações - Agosto 2026.pptx` (mês ajustado automaticamente) |
 
 Cada arquivo de return attribution tem duas abas: uma para o mês atual aberto e
 outra para o mês anterior fechado.
@@ -122,8 +130,19 @@ pesos da composição anterior ao último rebalanceamento, mas calculam
 Confira a data de modificação e abra pelo menos um arquivo de cada grupo. Os
 nomes são fixos e os arquivos anteriores são sobrescritos.
 
-Não são mais gerados `lamina_dados_*.xlsx`,
-`composicao_compacta_*.xlsx` nem PowerPoint de Prestação de Contas.
+Não são mais gerados `lamina_dados_*.xlsx` nem
+`composicao_compacta_*.xlsx`.
+
+Na Prestação de Contas são atualizados automaticamente:
+
+- mês no canto superior direito da primeira página;
+- tabela inicial de desempenho;
+- waterfall de decomposição de retornos;
+- tabela de composição da carteira;
+- gráfico de desempenho base 100.
+
+Os textos editoriais das páginas 1 e 2 não são alterados pelo programa. Abra o
+PPT gerado, revise esses textos manualmente e salve antes de distribuir.
 
 ## 9. Gerar o e-mail
 
@@ -174,6 +193,18 @@ faltar permissão de gravação na pasta.
 O template configurado não foi encontrado. Copie o nome exato do arquivo pelo
 Explorador e atualize `COMMERCIAL_TEMPLATE_FILES` em
 `xp_carteiras\monthly_config.py`.
+
+### A Prestação de Contas aparece como `[PULADO]`
+
+Confirme que o template indicado em `ACCOUNTABILITY_TEMPLATE_FILES` existe na
+pasta corporativa ou em `templates` dentro do projeto.
+
+### Erro ao gerar a Prestação de Contas
+
+- feche o PPT de saída antes de executar;
+- confirme que o Microsoft PowerPoint abre normalmente;
+- reinstale as dependências para garantir que `pywin32` está disponível;
+- não interrompa o processo enquanto os gráficos estiverem sendo atualizados.
 
 ### `ModuleNotFoundError`
 

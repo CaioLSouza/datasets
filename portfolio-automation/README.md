@@ -1,8 +1,9 @@
 # Automação das carteiras XP
 
 Este projeto calcula as carteiras, gera os arquivos Excel operacionais,
-atualiza as **Lâminas Comerciais** e cria o e-mail mensal no Outlook. Os Excel
-auxiliares `lamina_dados_*.xlsx` e a Prestação de Contas foram removidos.
+atualiza as **Lâminas Comerciais**, gera a **Prestação de Contas da Top Ações**
+e cria o e-mail mensal no Outlook. Os Excel auxiliares
+`lamina_dados_*.xlsx` continuam removidos.
 
 Para instruções detalhadas, consulte o
 [tutorial para iniciantes](TUTORIAL_INICIANTE.md).
@@ -10,7 +11,7 @@ Para instruções detalhadas, consulte o
 ## Comandos principais
 
 - `portfolio_automation.py`: calcula performance, componentes, composições e
-  return attribution, exporta os Excel e atualiza as Lâminas Comerciais.
+  return attribution, exporta os Excel e atualiza os PowerPoint.
 - `email_generator.py`: usa os Excel gerados para montar e salvar
   `email_carteiras.msg`.
 
@@ -25,10 +26,12 @@ xp_carteiras/
   components.py                  composição e atribuição por papel
   excel_reports.py               criação e formatação dos Excel
   powerpoint_reports.py          atualização da Lâmina Comercial
+  accountability_reports.py      geração da Prestação de Contas
   email_report.py                cálculos, HTML e Outlook
   monthly_config.py              nomes mensais dos templates comerciais
   settings.py                    caminhos de entrada e saída
   constants.py                   nomes e mapas estáticos
+templates/                        template empacotado da Prestação de Contas
 tests/                            testes com dados sintéticos
 ```
 
@@ -44,6 +47,10 @@ py -m venv .venv
 ```
 
 Os caminhos padrão continuam apontando para `\\xpdocs`.
+
+A Prestação de Contas requer Windows com Microsoft PowerPoint instalado. O
+template fornecido fica também em `templates`, como alternativa ao arquivo da
+pasta corporativa.
 
 ## Execução
 
@@ -79,8 +86,9 @@ Os caminhos podem ser substituídos por variáveis de ambiente:
 | `XP_EMAIL_DIR` | pasta de `email_carteiras.msg` |
 | `XP_PERFORMANCE_WORKBOOK` | arquivo `Performance carteiras.xlsm` |
 | `XP_COMP_SHEET_PATH` | arquivo `COMP SHEET/raw_data.xlsx` |
-| `XP_TEMPLATES_DIR` | templates da Lâmina Comercial |
+| `XP_TEMPLATES_DIR` | templates dos PowerPoint |
 | `XP_COMMERCIAL_DECK_DIR` | saída das Lâminas Comerciais |
+| `XP_ACCOUNTABILITY_DECK_DIR` | saída da Prestação de Contas |
 | `XP_SECTOR_CLASSIFICATION_PATH` | classificação setorial |
 | `XP_MARKET_DATA_PATH` | parquet de market data |
 | `XP_BDR_MARKET_DATA_PATH` | CSV de BDRs |
@@ -102,12 +110,15 @@ $env:XP_OUTPUT_DIR = "C:\temp\carteiras\output"
 
 Os testes usam dados sintéticos e não acessam `\\xpdocs` nem o Outlook.
 
-## Escopo removido
+## Escopo dos PowerPoint
 
 O pipeline não gera mais:
 
 - `lamina_dados_*.xlsx`;
-- `composicao_compacta_*.xlsx`;
-- arquivos de Prestação de Contas.
+- `composicao_compacta_*.xlsx`.
 
-Os PowerPoint `Lâmina Comercial - *.pptx` continuam sendo atualizados.
+Os PowerPoint `Lâmina Comercial - *.pptx` continuam sendo atualizados. A
+Prestação de Contas é gerada inicialmente para a Top Ações, com mês, tabela de
+desempenho, waterfall, composição e gráfico base 100 atualizados. Os textos
+editoriais das páginas 1 e 2 permanecem como estão no template para revisão
+manual.

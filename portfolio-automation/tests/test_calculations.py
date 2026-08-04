@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from datetime import date
 from unittest.mock import patch
 
 import numpy as np
@@ -14,6 +15,13 @@ from pptx.util import Inches
 
 from xp_carteiras import email_report as email
 from xp_carteiras import performance as portfolio
+from xp_carteiras.accountability_reports import (
+    AccountabilityPeriod,
+    accountability_output_filename,
+    performance_summary,
+    resolve_accountability_period,
+    waterfall_arrays,
+)
 from xp_carteiras.components import gerar_tabelas_componentes
 from xp_carteiras.constants import arq_base100, arq_performance, mapa_arquivo
 from xp_carteiras.email_report import EMAIL_FILENAME
@@ -230,6 +238,61 @@ class CommercialDeckBenchmarkTest(unittest.TestCase):
 
         self.assertEqual(column_map, {1: portfolio_name, 2: "SMLL"})
         self.assertEqual(table.rows[0].cells[2].text, "SMLL")
+
+
+class AccountabilityReportTest(unittest.TestCase):
+    def test_current_partial_month_uses_previous_closed_month(self) -> None:
+        frame = pd.DataFrame(
+            {"Carteira - TOP Ações XP": [100.0, 101.0]},
+            index=pd.to_datetime(["2026-07-31", "2026-08-04"]),
+        )
+
+        period = resolve_accountability_period(frame, today=date(2026, 8, 4))
+
+        self.assertEqual(period, AccountabilityPeriod(2026, 7, 2026, 8))
+
+    def test_lagged_data_uses_latest_available_month(self) -> None:
+        frame = pd.DataFrame(
+            {"Carteira - TOP Ações XP": [100.0, 102.0]},
+            index=pd.to_datetime(["2026-06-30", "2026-07-31"]),
+        )
+
+        period = resolve_accountability_period(frame, today=date(2026, 8, 4))
+
+        self.assertEqual(period, AccountabilityPeriod(2026, 7, 2026, 8))
+
+    def test_performance_summary_closes_at_reference_month(self) -> None:
+        frame = pd.DataFrame(
+            {
+                "Carteira - TOP Ações XP": [100.0, 110.0, 132.0, 150.0],
+                "Ibovespa": [100.0, 105.0, 115.5, 120.0],
+            },
+            index=pd.to_datetime(["2025-06-30", "2025-12-31", "2026-05-31", "2026-06-30"]),
+        )
+
+        summary = performance_summary(frame, 2026, 6)
+
+        self.assertAlmostEqual(summary.loc["Carteira - TOP Ações XP", "Mês"], 150 / 132 - 1)
+        self.assertAlmostEqual(summary.loc["Carteira - TOP Ações XP", "Acumulado"], 150 / 110 - 1)
+        self.assertAlmostEqual(summary.loc["Carteira - TOP Ações XP", "12 meses"], 150 / 100 - 1)
+
+    def test_waterfall_keeps_total_and_all_contributions(self) -> None:
+        categories, _, high, low, total, ordered = waterfall_arrays(
+            ["AAA", "BBB", "CCC"], [0.02, -0.01, 0.005], 0.015
+        )
+
+        self.assertEqual(categories[-1], "Carteira")
+        self.assertAlmostEqual(sum(ordered), 0.015)
+        self.assertEqual(sum(value is not None for value in high), 2)
+        self.assertEqual(sum(value is not None for value in low), 1)
+        self.assertAlmostEqual(total[-1], 0.015)
+
+    def test_output_filename_contains_report_month(self) -> None:
+        period = AccountabilityPeriod(2026, 7, 2026, 8)
+
+        filename = accountability_output_filename("Top Ações", period)
+
+        self.assertEqual(filename, "Prestação de Contas - Top Ações - Agosto 2026.pptx")
 
 
 if __name__ == "__main__":
