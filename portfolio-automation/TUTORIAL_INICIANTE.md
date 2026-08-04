@@ -145,6 +145,9 @@ O processo foi feito para rodar no primeiro dia útil. A tabela de desempenho e
 o waterfall usam o mês recém-encerrado e a composição que efetivamente vigorou
 durante esse mês. A tabela de composição mostra a nova carteira do mês que está
 começando. Para Small Caps, o benchmark usado é o SMLL; nas demais, Ibovespa.
+Na Lâmina Comercial, o retorno do ano, os últimos 12 meses, as estatísticas e
+o gráfico também terminam no último mês fechado. Por exemplo: ao executar em
+agosto, o MTD de agosto não entra nesses números; o corte é julho.
 
 Antes de salvar o PPT, o programa confere se o total do waterfall coincide com
 o retorno mensal da primeira página. Uma diferença relevante interrompe a
@@ -214,6 +217,10 @@ pasta corporativa ou em `templates` dentro do projeto.
 - confirme que o Microsoft PowerPoint abre normalmente;
 - reinstale as dependências para garantir que `pywin32` está disponível;
 - não interrompa o processo enquanto os gráficos estiverem sendo atualizados.
+
+O programa abre uma instância separada do PowerPoint, fecha somente a cópia que
+ele está gerando e encerra apenas essa instância. Apresentações que você abriu
+manualmente em outra instância não são fechadas pelo código.
 
 ### `ModuleNotFoundError`
 

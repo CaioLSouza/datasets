@@ -14,6 +14,7 @@ from .performance import (
     _ret_ano,
     estatisticas_carteira,
     info_adicionais_lamina,
+    recortar_ultimo_mes_fechado,
     tabela_performance_mensal_ano,
     tabela_retornos_acumulados,
 )
@@ -239,25 +240,40 @@ def _atualiza_grafico(shape, df_port):
     chart.replace_data(cd)
 
 
-def atualizar_ppt(caminho_template, caminho_saida, df_port, composition, serie_cdi, portfolio, ano=None):
-    """Abre a lâmina, preenche tabelas e gráfico, e salva mantendo a formatação."""
+def atualizar_ppt(
+    caminho_template,
+    caminho_saida,
+    df_port,
+    composition,
+    serie_cdi,
+    portfolio,
+    ano=None,
+    *,
+    today=None,
+):
+    """Preenche a lâmina somente com performance de meses já fechados."""
+    df_fechado = recortar_ultimo_mes_fechado(df_port, today=today)
     prs = Presentation(caminho_template)
     for slide in prs.slides:
         tabs = _classifica_tabelas(slide)
         if 'mensal' in tabs:
-            _atualiza_tabela_mensal(tabs['mensal'], df_port, portfolio, ano)
+            _atualiza_tabela_mensal(tabs['mensal'], df_fechado, portfolio, ano)
         if 'anos' in tabs:
-            _atualiza_tabela_anos(tabs['anos'], df_port)
+            _atualiza_tabela_anos(tabs['anos'], df_fechado)
         if 'acumulados' in tabs:
-            _atualiza_tabela_acumulados(tabs['acumulados'], df_port)
+            _atualiza_tabela_acumulados(tabs['acumulados'], df_fechado)
         if 'estatisticas' in tabs:
             _atualiza_2col_por_rotulo(
-                tabs['estatisticas'], _mapa_estatisticas(df_port[_nome_col_carteira(df_port)]))
+                tabs['estatisticas'],
+                _mapa_estatisticas(df_fechado[_nome_col_carteira(df_fechado)]),
+            )
         if 'info' in tabs:
-            _atualiza_2col_por_rotulo(tabs['info'], _mapa_info(df_port, composition, serie_cdi))
+            _atualiza_2col_por_rotulo(
+                tabs['info'], _mapa_info(df_fechado, composition, serie_cdi)
+            )
         for shp in slide.shapes:
             if shp.has_chart:
-                _atualiza_grafico(shp, df_port)
+                _atualiza_grafico(shp, df_fechado)
     prs.save(caminho_saida)
     print(f"PPT atualizado: {caminho_saida}")
 
