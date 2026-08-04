@@ -2,10 +2,34 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import numpy as np
 import pandas as pd
 
 from .constants import BENCH_LAMINA, DRIFT_INICIO
+
+
+def recortar_ultimo_mes_fechado(df_port, *, today=None):
+    """Remove do dataframe qualquer dado do mês corrente ainda em aberto.
+
+    Quando a base ainda termina em um mês anterior ao corrente, preserva o
+    último mês disponível. ``today`` existe para reprocessamentos e testes.
+    """
+    available = df_port.dropna(how='all')
+    if available.empty:
+        raise ValueError('df_port não possui dados de performance.')
+
+    latest = pd.Timestamp(available.index.max())
+    current = pd.Timestamp(today or date.today())
+    latest_period = latest.to_period('M')
+    current_period = current.to_period('M')
+    reference = current_period - 1 if latest_period >= current_period else latest_period
+    cutoff = reference.end_time
+    closed = df_port.loc[df_port.index <= cutoff].copy()
+    if closed.dropna(how='all').empty:
+        raise ValueError('Não há dados até o último mês fechado.')
+    return closed
 
 def _ret_diario_sem_drift(ret_periodo, comp_periodo):
     """Pesos renormalizados ao alvo todo dia (metodologia antiga)."""

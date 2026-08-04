@@ -122,6 +122,7 @@ Prestação de Contas é gerada para Top Ações, Top Dividendos e Top Small Cap
 com mês, tabela de desempenho, waterfall, composição e gráfico base 100
 atualizados. Executada no primeiro dia útil, ela usa os retornos e a composição
 que vigorou no mês encerrado; a tabela de composição mostra a carteira do novo
-mês. Os textos
-editoriais das páginas 1 e 2 permanecem como estão no template para revisão
-manual.
+mês. A Lâmina Comercial também termina no último mês fechado: o retorno do
+ano, os últimos 12 meses, as estatísticas e o gráfico não incorporam o MTD do
+mês em aberto. Os textos editoriais das páginas 1 e 2 permanecem como estão no
+template para revisão manual.

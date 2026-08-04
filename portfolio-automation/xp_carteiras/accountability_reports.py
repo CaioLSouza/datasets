@@ -40,6 +40,7 @@ MSO_TRUE = -1
 XP_YELLOW = 0x00BCFF
 NEUTRAL_GRAY = 0x7E7E7E
 TEXT_GRAY = 0x595959
+WATERFALL_FONT = "Roboto Condensed"
 
 
 @dataclass(frozen=True)
@@ -403,7 +404,7 @@ def _apply_custom_labels(series, labels: dict[int, str]) -> None:
             point.HasDataLabel = True
             point.DataLabel.Text = label
             point.DataLabel.Position = XL_LABEL_POSITION_OUTSIDE_END
-            point.DataLabel.Font.Name = "Roboto Condensed"
+            point.DataLabel.Font.Name = WATERFALL_FONT
             point.DataLabel.Font.Size = 8
             point.DataLabel.Font.Color = TEXT_GRAY
         except Exception:
@@ -474,6 +475,11 @@ def _replace_waterfall(slide, decomposition: pd.DataFrame) -> None:
     _apply_custom_labels(series[3], {len(categories): _label_text(float(totals[-1]))})
 
     try:
+        chart.ChartArea.Font.Name = WATERFALL_FONT
+    except Exception:
+        pass
+
+    try:
         value_axis = chart.Axes(2)
         value_axis.HasMajorGridlines = False
         value_axis.TickLabelPosition = -4142
@@ -483,7 +489,7 @@ def _replace_waterfall(slide, decomposition: pd.DataFrame) -> None:
     try:
         category_axis = chart.Axes(1)
         category_axis.Format.Line.Visible = MSO_FALSE
-        category_axis.TickLabels.Font.Name = "Roboto Condensed"
+        category_axis.TickLabels.Font.Name = WATERFALL_FONT
         category_axis.TickLabels.Font.Size = 8
         category_axis.TickLabels.Orientation = 45
     except Exception:
