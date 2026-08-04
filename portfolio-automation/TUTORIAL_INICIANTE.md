@@ -107,13 +107,17 @@ Os nomes externos permanecem iguais aos do processo original.
 | Curvas base 100 | `top_acoes_base_100.xlsx`, `top_dividendos_base_100.xlsx`, `top_small_caps_base_100.xlsx`, `esg_base_100.xlsx` |
 | Métricas | `portfolio_metrics_top_acoes.xlsx` e equivalentes |
 | Performance | `tab_performance_top_acoes.xlsx`, `tab_performance_top_dividendos.xlsx`, `tab_performance_top_small_caps.xlsx`, `tab_performance_esg.xlsx` |
-| Componentes | `componentes_top_acoes_atual.xlsx`, `componentes_top_acoes_ultimo_rebal.xlsx` e equivalentes |
+| Componentes | `componentes_top_acoes_atual.xlsx`, `componentes_top_acoes_ultimo_rebal.xlsx`, `componentes_top_acoes_comp_mes_passado_mtd_atual.xlsx` e equivalentes |
 | Composição | `composicao_top_acoes.xlsx`, `composicao_top_dividendos.xlsx`, `composicao_top_small_caps.xlsx`, `composicao_esg.xlsx` |
 | Return attribution | `decomposicao_top_acoes.xlsx`, `decomposicao_top_dividendos.xlsx`, `decomposicao_top_small_caps.xlsx`, `decomposicao_esg.xlsx` |
 | Lâmina Comercial | `Lâmina Comercial - Top Ações.pptx`, `Lâmina Comercial - Top Dividendos.pptx`, `Lâmina Comercial - Top Small Caps.pptx` |
 
 Cada arquivo de return attribution tem duas abas: uma para o mês atual aberto e
 outra para o mês anterior fechado.
+
+Os arquivos `componentes_*_comp_mes_passado_mtd_atual.xlsx` usam os ativos e
+pesos da composição anterior ao último rebalanceamento, mas calculam
+`Desempenho no mês` com os preços do mês atual até a data mais recente (MTD).
 
 Confira a data de modificação e abra pelo menos um arquivo de cada grupo. Os
 nomes são fixos e os arquivos anteriores são sobrescritos.
