@@ -19,6 +19,38 @@ from .performance import (
 )
 from .constants import rotulo_carteira_pt
 
+
+_BENCHMARK_LABELS = {
+    'IBOV': 'Ibovespa',
+    'IBOVESPA': 'Ibovespa',
+    'SMLL': 'SMLL',
+    'ISE': 'ISEE',
+    'ISEE': 'ISEE',
+}
+
+
+def _benchmark_from_label(label):
+    """Converte o rótulo do template para o nome da coluna de benchmark."""
+    return _BENCHMARK_LABELS.get(str(label).strip().upper())
+
+
+def _resolve_benchmark(label, available, used=None):
+    """Resolve o rótulo do template para um benchmark disponível.
+
+    Templates antigos podem trazer IBOV mesmo quando o dataframe comercial foi
+    filtrado para SMLL. Nesse caso, usa o próximo benchmark disponível.
+    """
+    used = set() if used is None else used
+    exact = _benchmark_from_label(label)
+    if exact in available and exact not in used:
+        return exact
+    return next((benchmark for benchmark in available if benchmark not in used), None)
+
+
+def _benchmark_columns(df_port):
+    nome_cart = _nome_col_carteira(df_port)
+    return [column for column in df_port.columns if column != nome_cart]
+
 def _set_cell_text(cell, value):
     """Troca o texto da célula preservando a formatação do primeiro run."""
     p = cell.text_frame.paragraphs[0]
@@ -57,19 +89,25 @@ def _classifica_tabelas(slide):
     return achadas
 
 
-def _mapa_colunas(table, nome_cart):
-    """Mapeia índice de coluna -> série, lendo o cabeçalho (Carteira / IBOV / SMLL / ISEE)."""
+def _mapa_colunas(table, nome_cart, df_port):
+    """Mapeia as colunas do template para as séries presentes no dataframe."""
     header = [c.text.strip() for c in table.rows[0].cells]
+    available = _benchmark_columns(df_port)
+    used = set()
     col_map = {}
     for ci, h in enumerate(header):
         if ci == 0:
             continue
         if h == 'Carteira':
             col_map[ci] = nome_cart
-        elif h == 'IBOV':
-            col_map[ci] = 'Ibovespa'
-        elif h in ('SMLL', 'ISEE'):
-            col_map[ci] = h
+        elif _benchmark_from_label(h) is not None:
+            benchmark = _resolve_benchmark(h, available, used)
+            if benchmark is None:
+                continue
+            col_map[ci] = benchmark
+            used.add(benchmark)
+            if _benchmark_from_label(h) != benchmark:
+                _set_cell_text(table.rows[0].cells[ci], benchmark)
     return col_map
 
 
@@ -79,6 +117,8 @@ def _atualiza_tabela_mensal(table, df_port, portfolio, ano=None):
     meses_en = list(t.columns[:-1])
     nome_cart = _nome_col_carteira(df_port)
     rot_cart = rotulo_carteira_pt.get(portfolio, nome_cart)
+    available = _benchmark_columns(df_port)
+    used = set()
 
     # atualiza o rótulo do ano no cabeçalho (última coluna da 1ª linha)
     cabec = table.rows[0].cells
@@ -88,10 +128,16 @@ def _atualiza_tabela_mensal(table, df_port, portfolio, ano=None):
         rot = row.cells[0].text.strip()
         if rot in (rot_cart, nome_cart):
             serie_col = nome_cart
-        elif rot in df_port.columns:
+        elif rot in available:
             serie_col = rot
-        elif rot == 'Ibovespa' and 'Ibovespa' in df_port.columns:
-            serie_col = 'Ibovespa'
+            used.add(serie_col)
+        elif _benchmark_from_label(rot) is not None:
+            serie_col = _resolve_benchmark(rot, available, used)
+            if serie_col is None:
+                continue
+            used.add(serie_col)
+            if _benchmark_from_label(rot) != serie_col:
+                _set_cell_text(row.cells[0], serie_col)
         else:
             continue
         vals = t.loc[serie_col]
@@ -103,7 +149,7 @@ def _atualiza_tabela_mensal(table, df_port, portfolio, ano=None):
 
 def _atualiza_tabela_anos(table, df_port):
     nome_cart = _nome_col_carteira(df_port)
-    col_map = _mapa_colunas(table, nome_cart)
+    col_map = _mapa_colunas(table, nome_cart, df_port)
     for row in list(table.rows)[1:]:
         try:
             ano = int(row.cells[0].text.strip())
@@ -117,7 +163,7 @@ def _atualiza_tabela_anos(table, df_port):
 def _atualiza_tabela_acumulados(table, df_port):
     nome_cart = _nome_col_carteira(df_port)
     t = tabela_retornos_acumulados(df_port)              # linhas períodos ; cols cart/bench
-    col_map = _mapa_colunas(table, nome_cart)
+    col_map = _mapa_colunas(table, nome_cart, df_port)
     for row in list(table.rows)[1:]:
         per = row.cells[0].text.strip()
         if per not in t.index:
@@ -182,7 +228,13 @@ def _atualiza_grafico(shape, df_port):
     cd = CategoryChartData(number_format=r'[$-416]mmm\-yy;@')
     cd.categories = [pd.Timestamp(d).to_pydatetime() for d in df_port.index]
     for i, col in enumerate(cols):
-        nome = nomes_orig[i] if i < len(nomes_orig) and nomes_orig[i] else col
+        nome_original = nomes_orig[i] if i < len(nomes_orig) else None
+        if i == 0:
+            nome = nome_original or col
+        elif _benchmark_from_label(nome_original) == col:
+            nome = nome_original
+        else:
+            nome = col
         cd.add_series(nome, _limpa(col))
     chart.replace_data(cd)
 
