@@ -26,7 +26,12 @@ from xp_carteiras.accountability_reports import (
 from xp_carteiras.components import decomposicao_retorno, gerar_tabelas_componentes
 from xp_carteiras.constants import arq_base100, arq_performance, mapa_arquivo
 from xp_carteiras.email_report import EMAIL_FILENAME
-from xp_carteiras.performance import _df_para_lamina
+from xp_carteiras.performance import (
+    _df_para_lamina,
+    recortar_ultimo_mes_fechado,
+    tabela_performance_mensal_ano,
+    tabela_retornos_acumulados,
+)
 from xp_carteiras.monthly_config import ACCOUNTABILITY_DISPLAY_LABELS, ACCOUNTABILITY_OUTPUT_LABELS
 from xp_carteiras.powerpoint_reports import (
     _atualiza_grafico,
@@ -204,6 +209,28 @@ class ArtifactNamesContractTest(unittest.TestCase):
 
 
 class CommercialDeckBenchmarkTest(unittest.TestCase):
+    def test_current_partial_month_is_excluded_from_year_and_last_12_months(self) -> None:
+        portfolio_name = "Carteira - TOP Ações XP"
+        frame = pd.DataFrame(
+            {
+                portfolio_name: [80.0, 100.0, 100.0, 110.0, 220.0],
+                "Ibovespa": [80.0, 100.0, 100.0, 108.0, 216.0],
+            },
+            index=pd.to_datetime(
+                ["2025-07-31", "2025-12-31", "2026-06-30", "2026-07-31", "2026-08-04"]
+            ),
+        )
+
+        closed = recortar_ultimo_mes_fechado(frame, today=date(2026, 8, 4))
+        annual = tabela_performance_mensal_ano(closed, 2026)
+        accumulated = tabela_retornos_acumulados(closed)
+
+        self.assertEqual(closed.index.max(), pd.Timestamp("2026-07-31"))
+        self.assertAlmostEqual(annual.loc[portfolio_name, "2026"], 0.10)
+        self.assertAlmostEqual(
+            accumulated.loc["Últimos 12 meses", portfolio_name], 110 / 80 - 1
+        )
+
     def test_small_caps_uses_smll_instead_of_ibovespa(self) -> None:
         portfolio_name = "Carteira - TOP SMALL CAPS XP"
         index = pd.to_datetime(["2026-01-30", "2026-02-27"])
@@ -308,6 +335,17 @@ class AccountabilityReportTest(unittest.TestCase):
         self.assertAlmostEqual(summary.loc["Carteira - TOP Ações XP", "Mês"], 150 / 132 - 1)
         self.assertAlmostEqual(summary.loc["Carteira - TOP Ações XP", "Acumulado"], 150 / 110 - 1)
         self.assertAlmostEqual(summary.loc["Carteira - TOP Ações XP", "12 meses"], 150 / 100 - 1)
+
+    def test_performance_summary_ignores_current_month_even_if_present(self) -> None:
+        frame = pd.DataFrame(
+            {"Carteira - TOP Ações XP": [100.0, 110.0, 220.0]},
+            index=pd.to_datetime(["2026-06-30", "2026-07-31", "2026-08-04"]),
+        )
+
+        summary = performance_summary(frame, 2026, 7)
+
+        self.assertAlmostEqual(summary.loc["Carteira - TOP Ações XP", "Mês"], 0.10)
+        self.assertAlmostEqual(summary.loc["Carteira - TOP Ações XP", "Acumulado"], 0.10)
 
     def test_waterfall_keeps_total_and_all_contributions(self) -> None:
         categories, _, high, low, total, ordered = waterfall_arrays(
