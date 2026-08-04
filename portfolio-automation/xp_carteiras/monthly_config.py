@@ -23,15 +23,24 @@ COMMERCIAL_OUTPUT_FILES = {
     "Carteira - TOP SMALL CAPS XP": "Lâmina Comercial - Top Small Caps.pptx",
 }
 
-# A Prestação de Contas é habilitada inicialmente para a Top Ações, que é a
-# carteira do template fornecido. Para incluir outra carteira, adicione aqui o
-# template correspondente depois de validar sua estrutura visual.
+# As três carteiras usam o mesmo template estrutural fornecido. A automação
+# troca o nome da carteira, benchmark, tabelas e gráficos em cada cópia.
 ACCOUNTABILITY_TEMPLATE_FILES = {
     "Carteira - TOP Ações XP": "Prestação de Contas - Top Ações - Julho 2026.pptx",
+    "Carteira - TOP DIVIDENDOS XP": "Prestação de Contas - Top Ações - Julho 2026.pptx",
+    "Carteira - TOP SMALL CAPS XP": "Prestação de Contas - Top Ações - Julho 2026.pptx",
 }
 
 ACCOUNTABILITY_OUTPUT_LABELS = {
     "Carteira - TOP Ações XP": "Top Ações",
+    "Carteira - TOP DIVIDENDOS XP": "Top Dividendos",
+    "Carteira - TOP SMALL CAPS XP": "Top Small Caps",
+}
+
+ACCOUNTABILITY_DISPLAY_LABELS = {
+    "Carteira - TOP Ações XP": "Top Ações XP",
+    "Carteira - TOP DIVIDENDOS XP": "Top Dividendos XP",
+    "Carteira - TOP SMALL CAPS XP": "Top Small Caps XP",
 }
 
 def commercial_ppt_config(settings: Settings) -> dict[str, dict[str, str]]:
@@ -60,5 +69,6 @@ def accountability_ppt_config(settings: Settings) -> dict[str, dict[str, str]]:
         config[portfolio] = {
             "template": str(template),
             "output_label": ACCOUNTABILITY_OUTPUT_LABELS[portfolio],
+            "display_label": ACCOUNTABILITY_DISPLAY_LABELS[portfolio],
         }
     return config
