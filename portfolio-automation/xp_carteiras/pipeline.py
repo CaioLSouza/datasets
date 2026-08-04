@@ -6,7 +6,12 @@ import os
 import pandas as pd
 from openpyxl import Workbook
 
-from .components import calcular_pesos_ibovespa, gerar_decomposicoes, gerar_tabelas_componentes, montar_df_composicao
+from .accountability_reports import (
+    accountability_output_filename,
+    atualizar_prestacao_contas,
+    resolve_accountability_period,
+)
+from .components import calcular_pesos_ibovespa, decomposicao_retorno, gerar_decomposicoes, gerar_tabelas_componentes, montar_df_composicao
 from .excel_reports import _preencher_sheet, _preencher_sheet_flat, exportar_tabela_retornos
 from .performance import _df_para_lamina, calcular_performance, indicadores_12m, indice_base100, tabela_retornos
 from .powerpoint_reports import atualizar_ppt
@@ -25,13 +30,15 @@ from .constants import (
     portfolio_names,
     sector_to_segment,
 )
-from .monthly_config import commercial_ppt_config
+from .monthly_config import accountability_ppt_config, commercial_ppt_config
 from .settings import Settings, load_settings
 
 def main(settings: Settings | None = None) -> None:
     """Executa o pipeline completo e grava os artefatos configurados."""
     settings = settings or load_settings()
     settings.output_dir.mkdir(parents=True, exist_ok=True)
+    settings.commercial_deck_dir.mkdir(parents=True, exist_ok=True)
+    settings.accountability_deck_dir.mkdir(parents=True, exist_ok=True)
 
     # --- Carga, preparação e performance ---
 
@@ -271,6 +278,41 @@ def main(settings: Settings | None = None) -> None:
             serie_cdi=cdi,
             portfolio=portfolio,
         )
+
+    # --- Prestação de Contas ---
+
+    accountability_config = accountability_ppt_config(settings)
+    for portfolio, cfg in accountability_config.items():
+        template = cfg.get('template', '')
+        if not template or not os.path.exists(template):
+            print(f"[PULADO] template da Prestação de Contas não encontrado para {portfolio}: {template}")
+            continue
+
+        df_port = _df_para_lamina(portfolio, resultado_dfs)
+        period = resolve_accountability_period(df_port)
+        df_decomposicao = decomposicao_retorno(
+            composition_dict[portfolio],
+            period.reference_year,
+            period.reference_month,
+            md,
+            mapa_nome,
+            mapa_setor,
+        )
+        df_composicao = dfs_composicao[portfolio]['PT'][
+            ['Setor', 'Companhia', 'Ticker', 'Peso']
+        ]
+        output_name = accountability_output_filename(cfg['output_label'], period)
+        output_path = settings.accountability_deck_dir / output_name
+        atualizar_prestacao_contas(
+            caminho_template=template,
+            caminho_saida=output_path,
+            df_port=df_port,
+            df_composicao=df_composicao,
+            df_decomposicao=df_decomposicao,
+            reference_year=period.reference_year,
+            reference_month=period.reference_month,
+        )
+        print(f"Prestação de Contas atualizada: {output_path}")
 
     # --- Atribuição de retorno ---
 

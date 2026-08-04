@@ -44,6 +44,7 @@ class Settings:
     email_dir: Path
     templates_dir: Path
     commercial_deck_dir: Path
+    accountability_deck_dir: Path
     performance_workbook_path: Path
     sector_classification_path: Path
     market_data_path: Path
@@ -64,6 +65,9 @@ class Settings:
             templates_dir=_env_path("XP_TEMPLATES_DIR", portfolio_root / "Templates"),
             commercial_deck_dir=_env_path(
                 "XP_COMMERCIAL_DECK_DIR", portfolio_root / "Lâmina Comercial"
+            ),
+            accountability_deck_dir=_env_path(
+                "XP_ACCOUNTABILITY_DECK_DIR", portfolio_root / "Prestação de Contas"
             ),
             performance_workbook_path=_env_path(
                 "XP_PERFORMANCE_WORKBOOK", portfolio_root.parent / "Performance carteiras.xlsm"
