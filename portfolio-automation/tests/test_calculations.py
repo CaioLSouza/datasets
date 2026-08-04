@@ -38,6 +38,7 @@ from xp_carteiras.powerpoint_reports import (
     _mapa_colunas,
     _nome_serie_xml,
 )
+from xp_carteiras import pipeline
 from xp_carteiras.settings import Settings
 
 
@@ -171,6 +172,52 @@ class SettingsTest(unittest.TestCase):
             settings = Settings.from_env()
 
         self.assertEqual(str(settings.output_dir), r"C:\temp\xp-output")
+
+
+class PipelineOrchestrationTest(unittest.TestCase):
+    @patch("xp_carteiras.pipeline.generate_powerpoints")
+    @patch("xp_carteiras.pipeline.generate_output_files")
+    @patch("xp_carteiras.pipeline.prepare_pipeline_context")
+    def test_full_command_prepares_once_and_runs_both_stages(
+        self, prepare, output, powerpoints
+    ) -> None:
+        settings = object()
+        context = object()
+        prepare.return_value = context
+
+        pipeline.main(settings)
+
+        prepare.assert_called_once_with(settings)
+        output.assert_called_once_with(context)
+        powerpoints.assert_called_once_with(context)
+
+    @patch("xp_carteiras.pipeline.generate_powerpoints")
+    @patch("xp_carteiras.pipeline.generate_output_files")
+    @patch("xp_carteiras.pipeline.prepare_pipeline_context")
+    def test_output_command_runs_only_excel_stage(
+        self, prepare, output, powerpoints
+    ) -> None:
+        context = object()
+        prepare.return_value = context
+
+        pipeline.main_output(object())
+
+        output.assert_called_once_with(context)
+        powerpoints.assert_not_called()
+
+    @patch("xp_carteiras.pipeline.generate_powerpoints")
+    @patch("xp_carteiras.pipeline.generate_output_files")
+    @patch("xp_carteiras.pipeline.prepare_pipeline_context")
+    def test_powerpoint_command_runs_only_deck_stage(
+        self, prepare, output, powerpoints
+    ) -> None:
+        context = object()
+        prepare.return_value = context
+
+        pipeline.main_powerpoints(object())
+
+        powerpoints.assert_called_once_with(context)
+        output.assert_not_called()
 
 
 class ArtifactNamesContractTest(unittest.TestCase):
