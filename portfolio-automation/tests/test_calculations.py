@@ -19,13 +19,15 @@ from xp_carteiras.accountability_reports import (
     AccountabilityPeriod,
     accountability_output_filename,
     performance_summary,
+    reconcile_decomposition_total,
     resolve_accountability_period,
     waterfall_arrays,
 )
-from xp_carteiras.components import gerar_tabelas_componentes
+from xp_carteiras.components import decomposicao_retorno, gerar_tabelas_componentes
 from xp_carteiras.constants import arq_base100, arq_performance, mapa_arquivo
 from xp_carteiras.email_report import EMAIL_FILENAME
 from xp_carteiras.performance import _df_para_lamina
+from xp_carteiras.monthly_config import ACCOUNTABILITY_DISPLAY_LABELS, ACCOUNTABILITY_OUTPUT_LABELS
 from xp_carteiras.powerpoint_reports import (
     _atualiza_grafico,
     _mapa_colunas,
@@ -126,6 +128,37 @@ class PriorCompositionCurrentMtdTest(unittest.TestCase):
         self.assertAlmostEqual(result.loc["CCC", "Peso"], 0.6)
         self.assertAlmostEqual(result.loc["BBB", "Desempenho no mês"], 0.10)
         self.assertAlmostEqual(result.loc["CCC", "Desempenho no mês"], -0.10)
+
+
+class ReturnAttributionCompositionTest(unittest.TestCase):
+    def test_month_uses_composition_in_force_before_month_end_rebalance(self) -> None:
+        composition = pd.DataFrame(
+            {
+                "cod_ativo": ["AAA", "BBB"],
+                pd.Timestamp("2026-06-30"): [0.8, 0.2],
+                pd.Timestamp("2026-07-31"): [0.2, 0.8],
+            }
+        )
+        market_data = pd.DataFrame(
+            {
+                "cod_ativo": ["AAA", "AAA", "BBB", "BBB"],
+                "data": pd.to_datetime(["2026-06-30", "2026-07-31", "2026-06-30", "2026-07-31"]),
+                "adj_close_price": [100.0, 110.0, 100.0, 100.0],
+            }
+        )
+
+        result = decomposicao_retorno(
+            composition,
+            2026,
+            7,
+            market_data,
+            name_map={"AAA": "A", "BBB": "B"},
+            sector_map={"AAA": "Setor A", "BBB": "Setor B"},
+        ).set_index("Ticker")
+
+        self.assertAlmostEqual(result.loc["AAA", "Peso"], 0.8)
+        self.assertAlmostEqual(result.loc["BBB", "Peso"], 0.2)
+        self.assertAlmostEqual(result.loc["", "Contribuição"], 0.08)
 
 class SettingsTest(unittest.TestCase):
     def test_environment_overrides_output_directory(self) -> None:
@@ -293,6 +326,42 @@ class AccountabilityReportTest(unittest.TestCase):
         filename = accountability_output_filename("Top Ações", period)
 
         self.assertEqual(filename, "Prestação de Contas - Top Ações - Agosto 2026.pptx")
+
+    def test_three_portfolios_are_enabled(self) -> None:
+        expected = {
+            "Carteira - TOP Ações XP",
+            "Carteira - TOP DIVIDENDOS XP",
+            "Carteira - TOP SMALL CAPS XP",
+        }
+
+        self.assertEqual(set(ACCOUNTABILITY_OUTPUT_LABELS), expected)
+        self.assertEqual(set(ACCOUNTABILITY_DISPLAY_LABELS), expected)
+
+    def test_small_reconciliation_difference_becomes_explicit_bar(self) -> None:
+        decomposition = pd.DataFrame(
+            [
+                {"Companhia": "A", "Ticker": "AAA", "Setor": "S", "Peso": 1.0,
+                 "Retorno no mês": 0.01, "Contribuição": 0.01},
+                {"Companhia": "Carteira (total)", "Ticker": "", "Setor": "", "Peso": 1.0,
+                 "Retorno no mês": np.nan, "Contribuição": 0.01},
+            ]
+        )
+
+        result = reconcile_decomposition_total(decomposition, 0.0102)
+
+        self.assertIn("Ajuste", set(result["Ticker"]))
+        self.assertAlmostEqual(result.loc[result["Ticker"] == "", "Contribuição"].iloc[0], 0.0102)
+
+    def test_large_reconciliation_difference_stops_generation(self) -> None:
+        decomposition = pd.DataFrame(
+            [
+                {"Companhia": "A", "Ticker": "AAA", "Contribuição": 0.046},
+                {"Companhia": "Carteira (total)", "Ticker": "", "Contribuição": 0.046},
+            ]
+        )
+
+        with self.assertRaisesRegex(ValueError, "não confere"):
+            reconcile_decomposition_total(decomposition, 0.008)
 
 
 if __name__ == "__main__":

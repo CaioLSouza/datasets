@@ -9,7 +9,7 @@ O processo possui dois comandos:
 
 1. `portfolio_automation.py` lê as bases corporativas, calcula as carteiras,
    gera os Excel, atualiza as Lâminas Comerciais e cria a Prestação de Contas
-   da Top Ações.
+   de Top Ações, Top Dividendos e Top Small Caps.
 2. `email_generator.py` usa esses Excel para criar `email_carteiras.msg`.
 
 O projeto mantém a **Lâmina Comercial** e a **Prestação de Contas**, mas não
@@ -118,7 +118,7 @@ Os nomes externos permanecem iguais aos do processo original.
 | Composição | `composicao_top_acoes.xlsx`, `composicao_top_dividendos.xlsx`, `composicao_top_small_caps.xlsx`, `composicao_esg.xlsx` |
 | Return attribution | `decomposicao_top_acoes.xlsx`, `decomposicao_top_dividendos.xlsx`, `decomposicao_top_small_caps.xlsx`, `decomposicao_esg.xlsx` |
 | Lâmina Comercial | `Lâmina Comercial - Top Ações.pptx`, `Lâmina Comercial - Top Dividendos.pptx`, `Lâmina Comercial - Top Small Caps.pptx` |
-| Prestação de Contas | `Prestação de Contas - Top Ações - Agosto 2026.pptx` (mês ajustado automaticamente) |
+| Prestação de Contas | `Prestação de Contas - Top Ações - Agosto 2026.pptx`, `Prestação de Contas - Top Dividendos - Agosto 2026.pptx` e `Prestação de Contas - Top Small Caps - Agosto 2026.pptx` |
 
 Cada arquivo de return attribution tem duas abas: uma para o mês atual aberto e
 outra para o mês anterior fechado.
@@ -140,6 +140,15 @@ Na Prestação de Contas são atualizados automaticamente:
 - waterfall de decomposição de retornos;
 - tabela de composição da carteira;
 - gráfico de desempenho base 100.
+
+O processo foi feito para rodar no primeiro dia útil. A tabela de desempenho e
+o waterfall usam o mês recém-encerrado e a composição que efetivamente vigorou
+durante esse mês. A tabela de composição mostra a nova carteira do mês que está
+começando. Para Small Caps, o benchmark usado é o SMLL; nas demais, Ibovespa.
+
+Antes de salvar o PPT, o programa confere se o total do waterfall coincide com
+o retorno mensal da primeira página. Uma diferença relevante interrompe a
+geração em vez de publicar números contraditórios.
 
 Os textos editoriais das páginas 1 e 2 não são alterados pelo programa. Abra o
 PPT gerado, revise esses textos manualmente e salve antes de distribuir.
