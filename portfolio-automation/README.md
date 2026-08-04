@@ -10,8 +10,10 @@ Para instruções detalhadas, consulte o
 
 ## Comandos principais
 
-- `portfolio_automation.py`: calcula performance, componentes, composições e
-  return attribution, exporta os Excel e atualiza os PowerPoint.
+- `portfolio_automation.py`: executa tudo: atualiza os Excel e gera os PPTs.
+- `update_output.py`: atualiza somente os Excel operacionais da pasta `output`.
+- `generate_powerpoints.py`: gera somente as Lâminas Comerciais e as
+  Prestações de Contas, sem regravar os Excel do `output`.
 - `email_generator.py`: usa os Excel gerados para montar e salvar
   `email_carteiras.msg`.
 
@@ -19,9 +21,14 @@ Para instruções detalhadas, consulte o
 
 ```text
 portfolio_automation.py          comando do pipeline principal
+update_output.py                 comando somente dos Excel de output
+generate_powerpoints.py          comando somente dos PPTs
 email_generator.py               comando de geração do e-mail
 xp_carteiras/
-  pipeline.py                    ordem das etapas e exportações
+  pipeline.py                    orquestra o fluxo completo ou parcial
+  pipeline_data.py               carga e preparação compartilhada dos dados
+  output_pipeline.py             geração dos Excel operacionais
+  powerpoint_pipeline.py         geração dos dois tipos de PPT
   performance.py                 retornos, risco e estatísticas
   components.py                  composição e atribuição por papel
   excel_reports.py               criação e formatação dos Excel
@@ -59,6 +66,20 @@ Execute primeiro:
 ```powershell
 .\.venv\Scripts\python.exe portfolio_automation.py
 ```
+
+Para executar apenas uma parte:
+
+```powershell
+# Somente os Excel da pasta output
+.\.venv\Scripts\python.exe update_output.py
+
+# Somente Lâminas Comerciais e Prestações de Contas
+.\.venv\Scripts\python.exe generate_powerpoints.py
+```
+
+Os comandos parciais fazem a mesma leitura e os mesmos cálculos do fluxo
+completo, mas gravam somente os artefatos da etapa escolhida. Assim, gerar os
+PPTs não altera `tab_performance_*.xlsx` nem os demais arquivos do `output`.
 
 Depois gere o e-mail:
 

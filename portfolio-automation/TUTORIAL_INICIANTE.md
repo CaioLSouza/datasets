@@ -5,12 +5,13 @@ necessário saber programar.
 
 ## 1. O que o projeto faz
 
-O processo possui dois comandos:
+O processo possui quatro comandos:
 
-1. `portfolio_automation.py` lê as bases corporativas, calcula as carteiras,
-   gera os Excel, atualiza as Lâminas Comerciais e cria a Prestação de Contas
-   de Top Ações, Top Dividendos e Top Small Caps.
-2. `email_generator.py` usa esses Excel para criar `email_carteiras.msg`.
+1. `portfolio_automation.py` executa tudo: atualiza os Excel e gera os PPTs.
+2. `update_output.py` atualiza somente os Excel da pasta `output`.
+3. `generate_powerpoints.py` gera somente as Lâminas Comerciais e as
+   Prestações de Contas.
+4. `email_generator.py` usa os Excel para criar `email_carteiras.msg`.
 
 O projeto mantém a **Lâmina Comercial** e a **Prestação de Contas**, mas não
 gera a lâmina completa auxiliar (`lamina_dados_*.xlsx`). O e-mail não é enviado
@@ -90,13 +91,32 @@ uma cópia de `Prestação de Contas - Top Ações - Julho 2026.pptx` na pasta
 `templates`. Se houver um arquivo com o mesmo nome na pasta corporativa de
 templates, o arquivo corporativo terá prioridade.
 
-## 7. Executar os cálculos, Excel e PowerPoint
+## 7. Escolher o que executar
 
-Confirme a VPN e feche arquivos de saída que estejam abertos. Execute:
+Confirme a VPN e feche os arquivos de saída da etapa escolhida.
+
+Para atualizar tudo, execute:
 
 ```powershell
 .\.venv\Scripts\python.exe portfolio_automation.py
 ```
+
+Para atualizar somente os Excel da pasta `output`, execute:
+
+```powershell
+.\.venv\Scripts\python.exe update_output.py
+```
+
+Para gerar somente as Lâminas Comerciais e as Prestações de Contas, execute:
+
+```powershell
+.\.venv\Scripts\python.exe generate_powerpoints.py
+```
+
+O comando dos PPTs relê as fontes corporativas e refaz os cálculos necessários,
+mas não regrava `tab_performance_*.xlsx` nem qualquer outro Excel do `output`.
+Você pode usá-lo sozinho quando precisar corrigir ou gerar novamente apenas os
+PowerPoint.
 
 O processo pode levar alguns minutos. Por padrão, os resultados são gravados
 em:
@@ -105,7 +125,7 @@ em:
 \\xpdocs\Research\Equities\Estrategia\Carteiras\Carteiras de Ações XP\output
 ```
 
-## 7. Arquivos esperados
+## 8. Arquivos esperados
 
 Os nomes externos permanecem iguais aos do processo original.
 
