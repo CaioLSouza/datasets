@@ -7,11 +7,21 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+from pptx import Presentation
+from pptx.chart.data import CategoryChartData
+from pptx.enum.chart import XL_CHART_TYPE
+from pptx.util import Inches
 
 from xp_carteiras import email_report as email
 from xp_carteiras import performance as portfolio
 from xp_carteiras.constants import arq_base100, arq_performance
 from xp_carteiras.email_report import EMAIL_FILENAME
+from xp_carteiras.performance import _df_para_lamina
+from xp_carteiras.powerpoint_reports import (
+    _atualiza_grafico,
+    _mapa_colunas,
+    _nome_serie_xml,
+)
 from xp_carteiras.settings import Settings
 
 
@@ -98,6 +108,76 @@ class ArtifactNamesContractTest(unittest.TestCase):
             },
         )
         self.assertEqual(EMAIL_FILENAME, "email_carteiras.msg")
+
+
+class CommercialDeckBenchmarkTest(unittest.TestCase):
+    def test_small_caps_uses_smll_instead_of_ibovespa(self) -> None:
+        portfolio_name = "Carteira - TOP SMALL CAPS XP"
+        index = pd.to_datetime(["2026-01-30", "2026-02-27"])
+        result_frames = {
+            portfolio_name: pd.DataFrame(
+                {
+                    portfolio_name: [100.0, 102.0],
+                    "Ibovespa": [100.0, 101.0],
+                    "SMLL": [100.0, 103.0],
+                },
+                index=index,
+            )
+        }
+
+        commercial = _df_para_lamina(portfolio_name, result_frames)
+
+        self.assertEqual(list(commercial.columns), [portfolio_name, "SMLL"])
+
+    def test_chart_relabels_legacy_ibovespa_series_as_smll(self) -> None:
+        presentation = Presentation()
+        slide = presentation.slides.add_slide(presentation.slide_layouts[6])
+        chart_data = CategoryChartData()
+        chart_data.categories = ["jan-26", "fev-26"]
+        chart_data.add_series("Carteira", [100.0, 102.0])
+        chart_data.add_series("Ibovespa", [100.0, 101.0])
+        shape = slide.shapes.add_chart(
+            XL_CHART_TYPE.LINE,
+            Inches(1), Inches(1), Inches(8), Inches(4),
+            chart_data,
+        )
+        index = pd.to_datetime(["2026-01-30", "2026-02-27"])
+        commercial = pd.DataFrame(
+            {
+                "Carteira - TOP SMALL CAPS XP": [100.0, 102.0],
+                "SMLL": [100.0, 103.0],
+            },
+            index=index,
+        )
+
+        _atualiza_grafico(shape, commercial)
+
+        series_names = [_nome_serie_xml(series._element) for series in shape.chart.series]
+        self.assertEqual(series_names, ["Carteira", "SMLL"])
+
+    def test_table_relabels_legacy_ibov_header_as_smll(self) -> None:
+        presentation = Presentation()
+        slide = presentation.slides.add_slide(presentation.slide_layouts[6])
+        table = slide.shapes.add_table(
+            2, 3,
+            Inches(1), Inches(1), Inches(8), Inches(2),
+        ).table
+        table.rows[0].cells[0].text = "Período"
+        table.rows[0].cells[1].text = "Carteira"
+        table.rows[0].cells[2].text = "IBOV"
+        portfolio_name = "Carteira - TOP SMALL CAPS XP"
+        commercial = pd.DataFrame(
+            {
+                portfolio_name: [100.0, 102.0],
+                "SMLL": [100.0, 103.0],
+            },
+            index=pd.to_datetime(["2026-01-30", "2026-02-27"]),
+        )
+
+        column_map = _mapa_colunas(table, portfolio_name, commercial)
+
+        self.assertEqual(column_map, {1: portfolio_name, 2: "SMLL"})
+        self.assertEqual(table.rows[0].cells[2].text, "SMLL")
 
 
 if __name__ == "__main__":
