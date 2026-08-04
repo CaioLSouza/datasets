@@ -1,7 +1,7 @@
 # Automação das carteiras XP
 
 Este projeto calcula as carteiras, gera os arquivos Excel operacionais,
-atualiza as **Lâminas Comerciais**, gera a **Prestação de Contas da Top Ações**
+atualiza as **Lâminas Comerciais**, gera a **Prestação de Contas das três carteiras**
 e cria o e-mail mensal no Outlook. Os Excel auxiliares
 `lamina_dados_*.xlsx` continuam removidos.
 
@@ -118,7 +118,10 @@ O pipeline não gera mais:
 - `composicao_compacta_*.xlsx`.
 
 Os PowerPoint `Lâmina Comercial - *.pptx` continuam sendo atualizados. A
-Prestação de Contas é gerada inicialmente para a Top Ações, com mês, tabela de
-desempenho, waterfall, composição e gráfico base 100 atualizados. Os textos
+Prestação de Contas é gerada para Top Ações, Top Dividendos e Top Small Caps,
+com mês, tabela de desempenho, waterfall, composição e gráfico base 100
+atualizados. Executada no primeiro dia útil, ela usa os retornos e a composição
+que vigorou no mês encerrado; a tabela de composição mostra a carteira do novo
+mês. Os textos
 editoriais das páginas 1 e 2 permanecem como estão no template para revisão
 manual.

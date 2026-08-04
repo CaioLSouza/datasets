@@ -9,6 +9,8 @@ from openpyxl import Workbook
 from .accountability_reports import (
     accountability_output_filename,
     atualizar_prestacao_contas,
+    performance_summary,
+    reconcile_decomposition_total,
     resolve_accountability_period,
 )
 from .components import calcular_pesos_ibovespa, decomposicao_retorno, gerar_decomposicoes, gerar_tabelas_componentes, montar_df_composicao
@@ -298,6 +300,12 @@ def main(settings: Settings | None = None) -> None:
             mapa_nome,
             mapa_setor,
         )
+        expected_return = performance_summary(
+            df_port, period.reference_year, period.reference_month
+        ).loc[portfolio, 'Mês']
+        df_decomposicao = reconcile_decomposition_total(
+            df_decomposicao, expected_return
+        )
         df_composicao = dfs_composicao[portfolio]['PT'][
             ['Setor', 'Companhia', 'Ticker', 'Peso']
         ]
@@ -309,6 +317,7 @@ def main(settings: Settings | None = None) -> None:
             df_port=df_port,
             df_composicao=df_composicao,
             df_decomposicao=df_decomposicao,
+            portfolio_label=cfg['display_label'],
             reference_year=period.reference_year,
             reference_month=period.reference_month,
         )

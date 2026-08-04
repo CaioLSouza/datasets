@@ -116,6 +116,54 @@ def performance_summary(
     return pd.DataFrame(rows).set_index("Série")
 
 
+def reconcile_decomposition_total(
+    decomposition: pd.DataFrame,
+    expected_return: float,
+    *,
+    tolerance: float = 0.0005,
+) -> pd.DataFrame:
+    """Garante que o total do waterfall coincide com o retorno da 1ª página.
+
+    Diferenças de até 5 bps recebem uma barra explícita de reconciliação.
+    Diferenças maiores interrompem a geração para nunca publicar números
+    contraditórios.
+    """
+    if pd.isna(expected_return):
+        raise ValueError("O retorno mensal da carteira não está disponível para reconciliação.")
+    result = decomposition.copy()
+    total_mask = result["Ticker"].astype(str).str.strip() == ""
+    details = result.loc[~total_mask]
+    calculated = float(details["Contribuição"].sum(skipna=True))
+    difference = float(expected_return) - calculated
+    if abs(difference) > tolerance:
+        raise ValueError(
+            "O total da decomposição não confere com o retorno mensal da carteira: "
+            f"decomposição={calculated:.4%}, retorno={expected_return:.4%}."
+        )
+
+    total_row = result.loc[total_mask].copy()
+    result = result.loc[~total_mask].copy()
+    if abs(difference) > 1e-10:
+        adjustment = {column: np.nan for column in result.columns}
+        adjustment.update(
+            {
+                "Companhia": "Ajuste de reconciliação",
+                "Ticker": "Ajuste",
+                "Setor": "",
+                "Contribuição": difference,
+            }
+        )
+        result = pd.concat([result, pd.DataFrame([adjustment])], ignore_index=True)
+
+    if total_row.empty:
+        total = {column: np.nan for column in result.columns}
+        total.update({"Companhia": "Carteira (total)", "Ticker": "", "Contribuição": expected_return})
+        total_row = pd.DataFrame([total])
+    else:
+        total_row.loc[:, "Contribuição"] = expected_return
+    return pd.concat([result, total_row], ignore_index=True)
+
+
 def waterfall_arrays(
     tickers: list[str],
     contributions: list[float],
@@ -168,7 +216,14 @@ def accountability_output_filename(portfolio_label: str, period: AccountabilityP
 
 def _iter_shapes(slide):
     for index in range(1, slide.Shapes.Count + 1):
-        yield slide.Shapes(index)
+        shape = slide.Shapes(index)
+        yield shape
+        try:
+            group_items = shape.GroupItems
+            for group_index in range(1, group_items.Count + 1):
+                yield group_items(group_index)
+        except Exception:
+            pass
 
 
 def _shape_by_name(slide, name: str):
@@ -182,10 +237,19 @@ def _set_text(shape, value: str) -> None:
     shape.TextFrame.TextRange.Text = str(value)
 
 
-def _replace_month_prefix(shape, month_year: str) -> None:
-    current = str(shape.TextFrame.TextRange.Text)
-    suffix = current.split("|", 1)[1].strip() if "|" in current else "Carteira Top Ações XP"
-    _set_text(shape, f"{month_year} | {suffix}")
+def _replace_month_prefix(shape, month_year: str, portfolio_label: str) -> None:
+    _set_text(shape, f"{month_year} | Carteira {portfolio_label}")
+
+
+def _update_portfolio_titles(slides, portfolio_label: str) -> None:
+    """Troca apenas títulos exatos, preservando os textos editoriais."""
+    for slide_number in (1, 2):
+        for shape in _iter_shapes(slides(slide_number)):
+            if not getattr(shape, "HasTextFrame", False):
+                continue
+            current = str(shape.TextFrame.TextRange.Text).strip()
+            if current.startswith("Top Ações XP"):
+                shape.TextFrame.TextRange.Paragraphs(1).Text = portfolio_label
 
 
 def _set_table_cell(table, row: int, column: int, value: str) -> None:
@@ -211,7 +275,12 @@ def _benchmark_column(df_port: pd.DataFrame) -> str:
     return benchmarks[0]
 
 
-def _update_summary_table(slide, df_port: pd.DataFrame, period: AccountabilityPeriod) -> None:
+def _update_summary_table(
+    slide,
+    df_port: pd.DataFrame,
+    period: AccountabilityPeriod,
+    portfolio_label: str,
+) -> None:
     _, table = _find_table(slide, "Desempenho")
     summary = performance_summary(df_port, period.reference_year, period.reference_month)
     portfolio = _nome_col_carteira(df_port)
@@ -220,7 +289,7 @@ def _update_summary_table(slide, df_port: pd.DataFrame, period: AccountabilityPe
     _set_table_cell(table, 1, 2, f"{month} {period.reference_year}")
     _set_table_cell(table, 1, 3, f"Acumulado {period.reference_year}")
 
-    labels_and_series = (("Carteira Top Ações XP", portfolio), (benchmark, benchmark))
+    labels_and_series = ((portfolio_label, portfolio), (benchmark, benchmark))
     for row, (label, series) in enumerate(labels_and_series, start=2):
         _set_table_cell(table, row, 1, label)
         _set_table_cell(table, row, 2, _fmt_pct_br(summary.loc[series, "Mês"], 1))
@@ -459,11 +528,11 @@ def _update_base100_chart(slide, df_port: pd.DataFrame, period: AccountabilityPe
     )
 
 
-def _update_dates(slides, period: AccountabilityPeriod) -> None:
+def _update_dates(slides, period: AccountabilityPeriod, portfolio_label: str) -> None:
     report = f"{MESES_EXT_PT[period.report_month - 1].capitalize()} de {period.report_year}"
     reference = f"{MESES_EXT_PT[period.reference_month - 1].capitalize()} de {period.reference_year}"
-    _replace_month_prefix(_shape_by_name(slides(1), "object 7"), report)
-    _replace_month_prefix(_shape_by_name(slides(2), "object 7"), reference)
+    _replace_month_prefix(_shape_by_name(slides(1), "object 7"), report, portfolio_label)
+    _replace_month_prefix(_shape_by_name(slides(2), "object 7"), reference, portfolio_label)
     _set_text(
         _shape_by_name(slides(2), "CaixaDeTexto 24"),
         f"Decomposição do retorno da carteira ({MESES_EXT_PT[period.reference_month - 1].capitalize()}/{str(period.reference_year)[2:]})",
@@ -485,6 +554,7 @@ def atualizar_prestacao_contas(
     df_composicao: pd.DataFrame,
     df_decomposicao: pd.DataFrame,
     *,
+    portfolio_label: str = "Top Ações XP",
     reference_year: int | None = None,
     reference_month: int | None = None,
     today: date | pd.Timestamp | None = None,
@@ -526,9 +596,10 @@ def atualizar_prestacao_contas(
         presentation = application.Presentations.Open(str(output), False, False, True)
         slides = presentation.Slides
         print("Prestação de Contas: atualizando datas e títulos...")
-        _update_dates(slides, period)
+        _update_portfolio_titles(slides, portfolio_label)
+        _update_dates(slides, period, portfolio_label)
         print("Prestação de Contas: atualizando tabela de desempenho...")
-        _update_summary_table(slides(1), df_port, period)
+        _update_summary_table(slides(1), df_port, period, portfolio_label)
         print("Prestação de Contas: atualizando waterfall...")
         _replace_waterfall(slides(2), df_decomposicao)
         print("Prestação de Contas: atualizando composição...")

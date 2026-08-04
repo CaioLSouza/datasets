@@ -278,9 +278,13 @@ def _retorno_papel_mes(cod_ativo, ano, mes, market_data):
 
 
 def _rebal_vigente_no_mes(comp_long, rebal_dates, ano, mes):
-    """Rebalanceamento vigente durante o mês (último rebal <= fim do mês)."""
-    fim_mes = pd.Timestamp(ano, mes, 1) + pd.offsets.MonthEnd(0)
-    vigentes = [d for d in rebal_dates if pd.Timestamp(d) <= fim_mes]
+    """Composição que entrou no mês (último rebal anterior ao seu início).
+
+    O rebalanceamento realizado no último dia do mês prepara a carteira do mês
+    seguinte e não pode ser aplicado retroativamente ao mês que terminou.
+    """
+    fim_mes_anterior = pd.Timestamp(ano, mes, 1) - pd.Timedelta(days=1)
+    vigentes = [d for d in rebal_dates if pd.Timestamp(d) <= fim_mes_anterior]
     return vigentes[-1] if vigentes else rebal_dates[0]
 
 
