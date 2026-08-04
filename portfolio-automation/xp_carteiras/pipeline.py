@@ -165,15 +165,24 @@ def main(settings: Settings | None = None) -> None:
     tabelas_componentes = {}
 
     for portfolio in portfolio_names:
-        tab_atual, tab_ultimo = gerar_tabelas_componentes(
+        tab_atual, tab_ultimo, tab_comp_anterior_mtd_atual = gerar_tabelas_componentes(
             composition_dict[portfolio], md, mapa_nome, mapa_setor
         )
 
-        tabelas_componentes[portfolio] = {'atual': tab_atual, 'ultimo': tab_ultimo}
+        tabelas_componentes[portfolio] = {
+            'atual': tab_atual,
+            'ultimo': tab_ultimo,
+            'comp_anterior_mtd_atual': tab_comp_anterior_mtd_atual,
+        }
 
         nome = mapa_arquivo[portfolio]
 
-        for sufixo, tab in [('atual', tab_atual), ('ultimo_rebal', tab_ultimo)]:
+        variantes = [
+            ('atual', tab_atual),
+            ('ultimo_rebal', tab_ultimo),
+            ('comp_mes_passado_mtd_atual', tab_comp_anterior_mtd_atual),
+        ]
+        for sufixo, tab in variantes:
             caminho = f"{output_dir}\\componentes_{nome}_{sufixo}.xlsx"
 
             with pd.ExcelWriter(caminho, engine='xlsxwriter') as writer:

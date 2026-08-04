@@ -14,7 +14,8 @@ from pptx.util import Inches
 
 from xp_carteiras import email_report as email
 from xp_carteiras import performance as portfolio
-from xp_carteiras.constants import arq_base100, arq_performance
+from xp_carteiras.components import gerar_tabelas_componentes
+from xp_carteiras.constants import arq_base100, arq_performance, mapa_arquivo
 from xp_carteiras.email_report import EMAIL_FILENAME
 from xp_carteiras.performance import _df_para_lamina
 from xp_carteiras.powerpoint_reports import (
@@ -79,6 +80,45 @@ class PortfolioCalculationsTest(unittest.TestCase):
         self.assertAlmostEqual(result.iloc[0], 0.05)
         self.assertAlmostEqual(result.iloc[1], 0.1 * (0.5 / 1.05))
 
+
+class PriorCompositionCurrentMtdTest(unittest.TestCase):
+    def test_uses_prior_composition_with_current_month_returns(self) -> None:
+        composition = pd.DataFrame(
+            {
+                "cod_ativo": ["AAA", "BBB", "CCC"],
+                pd.Timestamp("2026-05-29"): [0.7, 0.3, np.nan],
+                pd.Timestamp("2026-06-30"): [np.nan, 0.4, 0.6],
+                pd.Timestamp("2026-07-31"): [0.2, np.nan, 0.8],
+            }
+        )
+        prices = {
+            "AAA": [90.0, 95.0, 100.0, 105.0],
+            "BBB": [80.0, 90.0, 100.0, 110.0],
+            "CCC": [220.0, 210.0, 200.0, 180.0],
+        }
+        dates = pd.to_datetime(["2026-05-29", "2026-06-30", "2026-07-31", "2026-08-14"])
+        market_data = pd.DataFrame(
+            [
+                {"cod_ativo": ticker, "data": date, "adj_close_price": price}
+                for ticker, ticker_prices in prices.items()
+                for date, price in zip(dates, ticker_prices)
+            ]
+        )
+
+        _, _, prior_composition_current_mtd = gerar_tabelas_componentes(
+            composition,
+            market_data,
+            name_map={"AAA": "A", "BBB": "B", "CCC": "C"},
+            sector_map={"AAA": "Setor A", "BBB": "Setor B", "CCC": "Setor C"},
+        )
+
+        result = prior_composition_current_mtd.set_index("Ticker")
+        self.assertEqual(set(result.index), {"BBB", "CCC"})
+        self.assertAlmostEqual(result.loc["BBB", "Peso"], 0.4)
+        self.assertAlmostEqual(result.loc["CCC", "Peso"], 0.6)
+        self.assertAlmostEqual(result.loc["BBB", "Desempenho no mês"], 0.10)
+        self.assertAlmostEqual(result.loc["CCC", "Desempenho no mês"], -0.10)
+
 class SettingsTest(unittest.TestCase):
     def test_environment_overrides_output_directory(self) -> None:
         with patch.dict("os.environ", {"XP_OUTPUT_DIR": r"C:\temp\xp-output"}):
@@ -108,6 +148,18 @@ class ArtifactNamesContractTest(unittest.TestCase):
             },
         )
         self.assertEqual(EMAIL_FILENAME, "email_carteiras.msg")
+        self.assertEqual(
+            {
+                f"componentes_{name}_comp_mes_passado_mtd_atual.xlsx"
+                for name in mapa_arquivo.values()
+            },
+            {
+                "componentes_top_acoes_comp_mes_passado_mtd_atual.xlsx",
+                "componentes_top_dividendos_comp_mes_passado_mtd_atual.xlsx",
+                "componentes_top_small_caps_comp_mes_passado_mtd_atual.xlsx",
+                "componentes_esg_comp_mes_passado_mtd_atual.xlsx",
+            },
+        )
 
 
 class CommercialDeckBenchmarkTest(unittest.TestCase):

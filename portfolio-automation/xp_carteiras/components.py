@@ -135,7 +135,7 @@ def _formata_componentes(tabela):
 
 
 def gerar_tabelas_componentes(composition, market_data, name_map, sector_map):
-    """Gera as duas tabelas (atual e último rebal) para uma carteira."""
+    """Gera as tabelas atual, último rebal e composição anterior com MTD atual."""
     comp = composition.copy()
     comp_long = comp.melt(id_vars='cod_ativo', var_name='data_rebal', value_name='peso')
     comp_long['data_rebal'] = pd.to_datetime(comp_long['data_rebal'])
@@ -170,7 +170,14 @@ def gerar_tabelas_componentes(composition, market_data, name_map, sector_map):
         market_data=market_data, name_map=name_map, sector_map=sector_map,
     )
 
-    return tab_atual, tab_ultimo
+    tab_comp_anterior_mtd_atual = tabela_componentes(
+        comp, rebal_anterior,
+        ini_mes=ini_mes_atual, fim_mes=fim_mes_atual,
+        ini_ytd=ini_ytd_atual, fim_ref=data_max,
+        market_data=market_data, name_map=name_map, sector_map=sector_map,
+    )
+
+    return tab_atual, tab_ultimo, tab_comp_anterior_mtd_atual
 
 
 def _download_ibov_composition(index_composition_path):
