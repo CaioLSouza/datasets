@@ -1,0 +1,85 @@
+# =====================================================================
+#  CAMINHOS E PARÂMETROS — Pesquisa de Assessores XP
+#  (arquivo UTF-8)
+# =====================================================================
+#  Você mexe aqui só se algum caminho de rede mudar.
+# =====================================================================
+
+caminhos:
+  # Pasta onde você larga o export do Forms.
+  # O pipeline pega o arquivo .xlsx mais recente que ainda não foi
+  # processado (ou o que você passar em --arquivo).
+  entrada: '\\xpdocs\Research\Equities\Estrategia\Reports\Pesquisa assessores\input_forms'
+
+  # Pasta onde ficam as bases geradas. É a pasta que a PA Principal
+  # consulta via Power Query.
+  saida: '\\xpdocs\Research\Equities\Estrategia\Reports\Pesquisa assessores\bases'
+
+  # Arquivos gerados (dentro de `saida`).
+  base_historica: 'PA Base Historica.xlsx'
+  base_mes:       'PA Base Mes Atual.xlsx'
+
+  # Fonte da verdade do pipeline. Append-only, é daqui que as duas
+  # planilhas acima são regeradas do zero a cada rodada.
+  # Se as planilhas forem corrompidas, apague-as e rode de novo.
+  store: '_dados/respostas.csv'
+
+  # Log de cada rodada.
+  logs: '_logs'
+
+  # Arquivos que NÃO são tocados pelo pipeline (só referência).
+  pa_principal: '\\xpdocs\Research\Equities\Estrategia\Reports\Pesquisa assessores\PA Principal.xlsx'
+  ppt_pt:       '\\xpdocs\Research\Equities\Estrategia\Reports\Pesquisa assessores\XP Pesquisa de Assessores.pptx'
+  ppt_en:       '\\xpdocs\Research\Equities\Estrategia\Reports\Pesquisa assessores\XP IFAs Sentiment Survey.pptx'
+
+parametros:
+  # ------------------------------------------------------------------
+  # NÚMERO PUBLICADO NÃO MUDA.
+  # Até esta onda (inclusive), o percentual que sai é o que já foi ao ar
+  # — lido de config/valores_publicados.csv. Da onda seguinte em diante,
+  # o pipeline calcula do dado bruto.
+  #
+  # Para gerar o arquivo de congelamento (uma vez só):
+  #   python src\congelar_historico.py "\\xpdocs\...\PA Principal.xlsx"
+  #
+  # Depois disso NÃO mexa mais neste número. Ele é a fronteira entre o
+  # que já foi publicado e o que ainda vai ser.
+  # ------------------------------------------------------------------
+  ultima_onda_publicada: 202607
+
+  # Quantos meses de histórico vão para a aba `serie` da base do mês.
+  # Os gráficos de série temporal do report leem daqui.
+  # A capa hoje usa 25 pontos — mantenha folga.
+  janela_serie: 30
+
+  # Quantos slots de pergunta do mês reservar na base do mês.
+  # Cada slot tem endereço fixo; os gráficos apontam para o slot.
+  slots_pergunta_mes: 4
+
+  # Quantas linhas cada slot reserva (nº máximo de alternativas).
+  # Linhas sobrando ficam em branco e o gráfico as ignora.
+  linhas_por_slot: 12
+
+  # Denominador do percentual:
+  #   respondentes  -> quem de fato respondeu aquela pergunta  (RECOMENDADO)
+  #   onda          -> todos os respondentes da onda
+  # A planilha atual usa "onda" com o nº digitado à mão na linha 2, o
+  # que subestima o % de qualquer pergunta com não-resposta.
+  denominador: respondentes
+
+  # Fecha a rodada com erro se aparecer alternativa não declarada acima
+  # do limite definido em perguntas.yaml. Deixe true.
+  falhar_em_desconhecida: true
+
+# ---------------------------------------------------------------------
+# Série do Ibovespa usada no gráfico da capa (hoje digitada à mão na
+# coluna E da aba 'Gráfico capa'). Preencha uma linha por mês aqui e o
+# pipeline leva para a base do mês junto com o resto.
+# Formato: AAAAMM: fechamento
+# ---------------------------------------------------------------------
+ibovespa_fechamento:
+  202601: 176000
+  202602: 176001
+  202603: 174751.84
+  # 202604: ...
+  # 202605: ...

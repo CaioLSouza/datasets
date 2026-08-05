@@ -1,0 +1,406 @@
+# =====================================================================
+#  REGISTRO CANÔNICO DE PERGUNTAS — Pesquisa de Assessores XP
+#  (arquivo UTF-8 — não salve como ANSI)
+# =====================================================================
+#
+#  Este é o ÚNICO arquivo que você edita quando a pesquisa muda.
+#  O texto da pergunta no Forms pode mudar, as alternativas podem
+#  mudar, o alvo do Ibovespa pode rolar de ano: nada disso quebra o
+#  pipeline, desde que esteja declarado aqui.
+#
+#  ---------------------------------------------------------------
+#  COMO MEXER (os 4 casos que acontecem na prática)
+#  ---------------------------------------------------------------
+#
+#  1) MUDOU O TEXTO DA PERGUNTA no Forms
+#     -> acrescente um padrão novo em `match:`. Não remova os antigos:
+#        eles são o que mantém o histórico ligado.
+#
+#  2) MUDOU O RÓTULO DE UMA ALTERNATIVA (mesmo conceito, texto novo)
+#     -> mova o rótulo ANTIGO para `aliases:` e ponha o rótulo NOVO
+#        em `pt:`. A série histórica continua inteira.
+#        Ex.: "Riscos geopolíticos" virou "Riscos geopolíticos/ Guerra"
+#             em abr/2026 — ver a opção `geopolitico` abaixo.
+#
+#  3) ENTROU UMA ALTERNATIVA NOVA
+#     -> adicione um item em `opcoes:` com id, pt e en.
+#        Se você esquecer, o pipeline para e avisa qual é.
+#
+#  4) SAIU UMA ALTERNATIVA
+#     -> não apague nada. Ela só para de aparecer nas ondas novas.
+#        O histórico precisa dela.
+#
+#  ---------------------------------------------------------------
+#  CAMPOS
+#  ---------------------------------------------------------------
+#  id           identificador estável. NUNCA mude depois de criado.
+#  tipo         unica | multipla | escala | faixa | texto
+#  match        regex que reconhece a coluna no export do Forms.
+#               A comparação ignora acento, caixa e espaços repetidos.
+#  opcoes[].id  identificador estável da alternativa
+#  opcoes[].pt  rótulo ATUAL em português (sai no report PT)
+#  opcoes[].en  rótulo em inglês (sai no report ENG)
+#  aliases      rótulos históricos que apontam para a mesma opção
+#  divide_em    valor sujo do Forms que na verdade são 2+ opções
+#  desde_onda / ate_onda   janela de validade (só documenta, não filtra)
+#
+# =====================================================================
+
+versao: 2
+
+# ---------------------------------------------------------------------
+# Colunas de metadado do export do Forms (não são perguntas)
+# ---------------------------------------------------------------------
+colunas_meta:
+  id:      ["Id", "ID"]
+  inicio:  ["Hora de início", "Start time"]
+  fim:     ["Hora de conclusão", "Completion time"]
+  email:   ["Email"]
+  nome:    ["Nome", "Name"]
+  onda:    ["Survey"]
+
+# ---------------------------------------------------------------------
+# Regras gerais
+# ---------------------------------------------------------------------
+regras:
+  # Uma alternativa não declarada só vira ERRO se passar dos DOIS
+  # limites abaixo. Alternativa nova de verdade tem participação alta
+  # (ex.: "Choque do petróleo" estreou com 65%); write-in de texto livre
+  # é 1 ou 2 pessoas. Sem o mínimo absoluto, numa onda de 100 respostas
+  # qualquer resposta solta viraria 1% e travaria a rodada à toa.
+  limite_alerta_desconhecida: 0.05     # 5% dos que responderam a pergunta
+  minimo_respostas_desconhecida: 5     # e pelo menos 5 pessoas
+  bucket_outros:
+    id: _outros
+    pt: "Outros"
+    en: "Others"
+
+# =====================================================================
+#  PERGUNTAS RECORRENTES  (a ordem aqui é a ordem do report)
+# =====================================================================
+perguntas:
+
+  # -------------------------------------------------------------------
+  - id: regiao
+    ordem: 10
+    tipo: multipla
+    recorrente: true
+    pt: "De qual região do Brasil é seu escritório?"
+    en: "Which region of Brazil is your office located in?"
+    match:
+      - "regiao do brasil.*escritorio"
+    opcoes:
+      - {id: sudeste,      pt: "Sudeste",      en: "Southeast"}
+      - {id: sul,          pt: "Sul",          en: "South"}
+      - {id: nordeste,     pt: "Nordeste",     en: "Northeast"}
+      - {id: centro_oeste, pt: "Centro Oeste", en: "Midwest"}
+      - {id: norte,        pt: "Norte",        en: "North"}
+    # O Forms às vezes exporta duas marcações coladas, sem o ";".
+    # São ~20 casos no histórico. Aqui a gente desfaz a colagem.
+    divide_em:
+      "SudesteSul":          [sudeste, sul]
+      "SulSudeste":          [sul, sudeste]
+      "NordesteSudeste":     [nordeste, sudeste]
+      "SudesteNordeste":     [sudeste, nordeste]
+      "SulNordeste":         [sul, nordeste]
+      "NordesteNorte":       [nordeste, norte]
+      "SulNorte":            [sul, norte]
+      "Centro OesteSudeste": [centro_oeste, sudeste]
+      "NorteSudeste":        [norte, sudeste]
+
+  # -------------------------------------------------------------------
+  - id: alocacao_rv
+    ordem: 20
+    tipo: faixa
+    unidade: percentual
+    recorrente: true
+    pt: "Dentro da sua carteira de clientes, a alocação em renda variável está, na média:"
+    en: "Within your clients' portfolio, the allocation in equities is"
+    match:
+      - "carteira de clientes.*alocacao em renda variavel"
+    # ATENÇÃO: em out/2023 a faixa "0% a 25%" foi PARTIDA em duas
+    # ("0% a 10%" e "10% a 25%"). Isso não é renomeação, é mudança de
+    # grade — não dá para juntar para trás. As duas grades convivem no
+    # histórico; o report mostra a grade da onda corrente.
+    opcoes:
+      - {id: p_0_25,   pt: "0% a 25%",   en: "0% to 25%",   ate_onda: 202309}
+      - {id: p_0_10,   pt: "0% a 10%",   en: "0% to 10%",   desde_onda: 202310}
+      - {id: p_10_25,  pt: "10% a 25%",  en: "10% to 25%",  desde_onda: 202310}
+      - {id: p_25_50,  pt: "25% a 50%",  en: "25% to 50%"}
+      - {id: p_50_75,  pt: "50% a 75%",  en: "50% to 75%"}
+      - {id: p_75_100, pt: "75% a 100%", en: "75% to 100%"}
+
+  # -------------------------------------------------------------------
+  - id: intencao_rv
+    ordem: 30
+    tipo: unica
+    recorrente: true
+    destaque_capa: true          # alimenta o gráfico da capa
+    pt: "Considerando o cenário dos próximos meses, seus clientes:"
+    en: "Regarding their investments in equities, your clients:"
+    match:
+      - "considerando o cenario dos proximos meses, seus clientes"
+    opcoes:
+      - {id: manter,   pt: "Não pretendem alterar seus investimentos em renda variável", en: "Do not wish to alter them"}
+      - {id: aumentar, pt: "Planejam aumentar a alocação em renda variável",             en: "Wish to increase them"}
+      - {id: diminuir, pt: "Planejam diminuir a alocação em renda variável",             en: "Wish to decrease them"}
+
+  # -------------------------------------------------------------------
+  - id: classes_ativos
+    ordem: 40
+    tipo: multipla
+    recorrente: true
+    pt: "Em quais classes de ativos seus clientes estão mais interessados?"
+    en: "Which other assets are your clients interested in?"
+    match:
+      - "quais classes de ativos seus clientes estao mais interessados"
+    opcoes:
+      - {id: tesouro_rf,    pt: "Tesouro Direto e Renda Fixa", en: "Fixed Income"}
+      - {id: fundos_rf,     pt: "Fundos de Renda Fixa",        en: "Fixed Income Funds"}
+      - {id: fii,           pt: "Fundos Imobiliários",         en: "REITs"}
+      - {id: internacional, pt: "Investimentos Internacionais (dólar, fundos, ETFs, etc)", en: "International Investments"}
+      - {id: acoes,         pt: "Ações",                       en: "Equities"}
+      - {id: multimercado,  pt: "Fundos Multimercado",         en: "Hedge Funds"}
+      - {id: cripto,        pt: "Criptoativos",                en: "Cryptocurrencies"}
+      - {id: fundos_rv,     pt: "Fundos de Renda Variável",    en: "Equities Funds"}
+      # RENOMEAÇÃO abr/2026: "Ouro" [202307-202603] -> "Ouro e commodities" [202604-].
+      # Ondas disjuntas, mesmo conceito. Sem este alias a série parte em duas.
+      - {id: ouro,          pt: "Ouro e commodities",          en: "Gold",
+         aliases: ["Ouro"]}
+    # Write-ins do campo "Outra". Não são alternativas do Forms — coexistem
+    # com as oficiais nas mesmas ondas, o que prova que não são renomeação.
+    # Declarados aqui só para não disparar erro toda rodada.
+    agrupa_texto_livre:
+      previdencia:  ["Previdência", "Previdencia", "previdência"]
+      fundo_acoes:  ["Fundo de ações", "Fundo de Ações", "fundo de ações"]
+      estruturadas: ["Operações estruturadas", "Estruturadas", "estruturadas", "COE"]
+      renda_fixa:   ["Renda Fixa", "renda fixa", "RENDA FIXA", "Crédito Privado",
+                     "CDB, LCI, LCA", "Compromissadas", "Cetipados", "Renda +"]
+      alternativos: ["Alternativos", "alternativos", "Fundos Alternativos"]
+      derivativos:  ["Derivativos", "Opções", "opções", "venda coberta",
+                     "derivativos agricolas"]
+      etf:          ["ETF", "ETFs"]
+
+  # -------------------------------------------------------------------
+  - id: pct_internacional
+    ordem: 50
+    tipo: faixa
+    unidade: percentual
+    recorrente: true
+    pt: "Qual a porcentagem dos seus clientes que já investem em ativos internacionais?"
+    en: "What percentage of your clients already invest in international assets?"
+    match:
+      - "porcentagem dos seus clientes que ja investem em ativos internacionais"
+    opcoes:
+      - {id: i_0_5,     pt: "0% a 5%",      en: "0% to 5%"}
+      - {id: i_5_10,    pt: "5% a 10%",     en: "5% to 10%"}
+      - {id: i_10_20,   pt: "10% a 20%",    en: "10% to 20%"}
+      - {id: i_20_50,   pt: "20% a 50%",    en: "20% to 50%"}
+      - {id: i_50_mais, pt: "Acima de 50%", en: "Above 50%"}
+
+  # -------------------------------------------------------------------
+  - id: interesse_internacional
+    ordem: 60
+    tipo: multipla
+    recorrente: true
+    pt: "Em investimentos internacionais, seus clientes se interessam por:"
+    en: "In international investments, your clients are interested in"
+    match:
+      - "em investimentos internacionais, seus clientes se interessam"
+    opcoes:
+      - {id: etfs,          pt: "ETFs",                  en: "ETFs"}
+      - {id: acoes_intl,    pt: "Ações internacionais",  en: "International equities"}
+      - {id: fundos_intl,   pt: "Fundos Internacionais", en: "International Funds"}
+      - {id: dolar,         pt: "Dólar",                 en: "US Dollar"}
+      # RENOMEAÇÃO abr/2026: "Bonds" [202307-202603] -> "Bonds e crédito" [202604-].
+      - {id: bonds,         pt: "Bonds e crédito",       en: "Bonds and credit",
+         aliases: ["Bonds"]}
+      - {id: sem_interesse, pt: "Não estão interessados por investimentos internacionais",
+         en: "Not interested in international investments"}
+    # Write-ins recorrentes (texto livre, não são alternativas do Forms).
+    # Agrupados só para o log não virar uma lista de typos.
+    agrupa_texto_livre:
+      treasuries: ["Treasury", "Treasuries", "Treasurys", "Tresuries", "treasures", "Tesouro"]
+      reits:      ["REITs", "REITS", "Reits", "REIT"]
+
+  # -------------------------------------------------------------------
+  - id: riscos_bolsa
+    ordem: 70
+    tipo: multipla
+    recorrente: true
+    pt: "Quais você acha que devem ser os maiores riscos para a Bolsa brasileira nos próximos meses"
+    en: "What do you think are the biggest risks for the Brazilian stock market in the coming months?"
+    # O texto já apareceu como "os maiores risco" e "o maiores riscos".
+    # O regex abaixo cobre as duas grafias.
+    match:
+      - "maiores? +riscos? +para a bolsa brasileira"
+    # -----------------------------------------------------------------
+    # CUTOVER DE abr/2026 (202604)
+    # O conjunto inteiro de alternativas foi reescrito nesta onda.
+    # As 5 renomeações abaixo têm ondas DISJUNTAS (até 202603 x a partir
+    # de 202604), o que prova que são o mesmo conceito com rótulo novo.
+    # Hoje, sem estes aliases, a Base trata cada uma como linha nova e a
+    # série histórica do gráfico zera em abr/2026.
+    # -----------------------------------------------------------------
+    opcoes:
+      - {id: fiscal,      pt: "Riscos fiscais no Brasil",   en: "Domestic fiscal risks"}
+      - {id: inflacao_br, pt: "Inflação em alta no Brasil", en: "Higher domestic inflation"}
+      - {id: dolar_alto,  pt: "Dólar mais alto",            en: "Strong USD"}
+      - {id: politica,    pt: "Instabilidade política/ Eleições", en: "Political instability / elections",
+         aliases: ["Instabilidade política"]}
+      - {id: geopolitico, pt: "Riscos geopolíticos/ Guerra", en: "Geopolitical risks / war",
+         aliases: ["Riscos geopolíticos"]}
+      - {id: juros_br,    pt: "Juros mais altos que o esperado o Brasil", en: "Higher-than-expected interest rates in Brazil",
+         aliases: ["Juros mais altos no Brasil"]}
+      - {id: juros_dm,    pt: "Juros mais altos nos mercados desenvolvidos", en: "Higher interest rates in developed markets",
+         aliases: ["Política monetária mais dura nos mercados desenvolvidos"]}
+      - {id: global,      pt: "Desaceleração econômica global", en: "Global economic slowdown",
+         aliases: ["Recessão nos EUA"]}
+      - {id: petroleo,    pt: "Choque do petróleo", en: "Oil shock", desde_onda: 202604}
+      # Descontinuadas em 202604 — mantidas para o histórico não furar.
+      - {id: china,       pt: "Crescimento econômico fraco na China", en: "China disappointing economic recovery", ate_onda: 202603}
+      - {id: estatais,    pt: "Interferência em empresas estatais",   en: "Government intervention on SOEs",       ate_onda: 202603}
+      - {id: tarifas_eua, pt: "Política tarifária americana",         en: "US tariff policy",                      ate_onda: 202603}
+
+  # -------------------------------------------------------------------
+  - id: setores
+    ordem: 80
+    tipo: multipla
+    recorrente: true
+    pt: "Em quais setores da Bolsa seus clientes estão mais interessados em investir neste momento?"
+    en: "Which sectors are your clients most interested in investing in right now?"
+    match:
+      - "quais setores da bolsa seus clientes estao mais interessados"
+    opcoes:
+      - {id: financeiro,   pt: "Financeiro",                          en: "Financials"}
+      - {id: utilities,    pt: "Elétricas & Saneamento",              en: "Utilities"}
+      - {id: oleo_gas,     pt: "Petróleo & Gás",                      en: "Oil & Gas"}
+      - {id: mineracao,    pt: "Mineração & Siderurgia",              en: "Metals & Mining"}
+      - {id: agro,         pt: "Agro",                                en: "Agribusiness"}
+      - {id: imobiliario,  pt: "Imobiliário",                         en: "Real Estate"}
+      - {id: papel,        pt: "Papel & Celulose",                    en: "Pulp & Paper"}
+      - {id: tmt,          pt: "Telecomunicações, Mídia e Tecnologia", en: "TMT"}
+      - {id: bens_capital, pt: "Bens de Capital",                     en: "Capital Goods"}
+      - {id: saude,        pt: "Saúde",                               en: "Health Care"}
+      - {id: alimentos,    pt: "Alimentos & Bebidas",                 en: "Food & Beverages"}
+      - {id: varejo,       pt: "Varejo",                              en: "Retail"}
+      - {id: transportes,  pt: "Transportes",                         en: "Transportation"}
+      - {id: educacao,     pt: "Educação",                            en: "Education"}
+      - {id: nenhum,       pt: "Não estão interessados",              en: "Not interested", desde_onda: 202606}
+
+  # -------------------------------------------------------------------
+  - id: sentimento_bolsa
+    ordem: 90
+    tipo: escala
+    minimo: 0
+    maximo: 10
+    recorrente: true
+    pt: "Numa escala de 0 a 10, indique o seu sentimento, como assessor, em relação à Bolsa atualmente"
+    en: "On a scale of 0 to 10, how do you feel about the Brazilian stock market right now?"
+    match:
+      - "escala de 0 a 10.*sentimento, como assessor"
+
+  # -------------------------------------------------------------------
+  - id: apetite_risco
+    ordem: 100
+    tipo: multipla
+    recorrente: true
+    pt: "Qual dos fatores abaixo aumentaria o apetite a risco dos clientes para alocar em ações brasileiras?"
+    en: "Which of the factors below would increase your clients' risk appetite for Brazilian equities?"
+    # Já apareceu como "apetite por risco" e "apetite a risco dos clientes".
+    match:
+      - "fatores abaixo aumentaria o apetite"
+    # -----------------------------------------------------------------
+    # Esta pergunta tem a pior deriva de rótulo de todas: o corte de
+    # juros nos EUA já teve QUATRO rótulos diferentes, todos com ondas
+    # disjuntas. Hoje a série aparece picotada em 4 pedaços no gráfico.
+    # -----------------------------------------------------------------
+    opcoes:
+      - {id: juros_br_corte, pt: "Cortes de juros no Brasil", en: "Interest rate cuts in Brazil",
+         aliases: ["Cortes de juros mais agressivos no Brasil"]}
+      - {id: juros_eua_corte, pt: "Queda de juros nos EUA e no mundo", en: "Rate cuts in the US and globally",
+         aliases: ["Corte de juros nos EUA",
+                   "Corte de juros mais agressivo nos EUA",
+                   "Queda de juros nos EUA e mundo"]}
+      - {id: recuperacao, pt: "Melhora na recuperação econômica global", en: "Improving global economic recovery",
+         aliases: ["Melhora na recuperação econômica da China"]}
+      - {id: politica_econ, pt: "Mudança de rumo na política econômica", en: "Change of course in economic policy",
+         desde_onda: 202503}
+      - {id: performance, pt: "Mercado voltando a ter performance sólida", en: "Market returning to solid performance",
+         desde_onda: 202509}
+      # Descontinuadas em 202509.
+      - {id: fiscal_menor, pt: "Redução em riscos de política fiscal no Brasil", en: "Lower fiscal risk in Brazil", ate_onda: 202508}
+      - {id: ruido_menor,  pt: "Redução em ruídos políticos no Brasil",         en: "Less political noise in Brazil", ate_onda: 202508}
+      - {id: soft_landing, pt: "Cenário de desaceleração econômica nos EUA sem recessão", en: "US soft landing", ate_onda: 202508}
+    agrupa_texto_livre:
+      troca_governo: ["Mudança de governo", "Troca de governo", "Mudança de Governo",
+                      "troca de governo", "Troca de Presidente", "troca do governo federal",
+                      "Queda do Lula", "Queda do atual Presidente", "Troca do presidente."]
+
+# =====================================================================
+#  PERGUNTAS COM SAFRA (rolam de período)
+#
+#  Na BASE HISTÓRICA cada safra é uma série distinta (safra=2025, 2026…)
+#  -> você nunca perde a comparação do que foi perguntado na época.
+#
+#  Na BASE DO MÊS só entra a safra corrente, no MESMO endereço de sempre
+#  -> o gráfico do report não precisa ser refeito quando o alvo rola.
+#
+#  Quando rolar de 2026 para 2027: NÃO mexa aqui. O regex já captura
+#  qualquer ano. A safra nova aparece sozinha.
+# =====================================================================
+perguntas_safra:
+
+  - id: ibovespa_alvo
+    ordem: 110
+    tipo: faixa
+    unidade: pontos
+    recorrente: true
+    substitui_no_mes: true
+    pt: "Qual o nível que você espera que o Ibovespa atinja ao fim de {safra}?"
+    en: "What level do you expect the Ibovespa to reach by the end of {safra}?"
+    match:
+      - "ibovespa atinja (?:ao |no )?fim de (?P<safra>\\d{4})"
+      - "ibovespa atinja nos proximos 12 meses"          # safra = 12m
+      - "ibovespa atinja ao fim dos proximos 12 meses"
+    safra_padrao: "12m"
+    # As faixas ("Entre 190 e 200 mil pontos", "Acima de 210 mil pontos")
+    # são lidas por parser numérico — não precisam ser cadastradas uma a
+    # uma. É isso que fez a re-grade de abr/2026 (faixas de 10k viraram
+    # faixas de 20k) passar sem quebrar nada.
+    parser_faixa: true
+
+  - id: selic_alvo
+    ordem: 120
+    tipo: faixa
+    unidade: percentual
+    recorrente: false
+    substitui_no_mes: true
+    pt: "Em qual nível você acha que a taxa Selic estará no final de {safra}?"
+    en: "What level do you expect the Selic rate to reach by the end of {safra}?"
+    match:
+      - "nivel.*taxa selic estara no final de (?P<safra>\\d{4})"
+      - "nivel que voce espera que a selic atinja ao fim de (?P<safra>\\d{4})"
+    safra_padrao: "corrente"
+    parser_faixa: true
+
+# =====================================================================
+#  PERGUNTAS DO MÊS
+#
+#  Você NÃO cadastra pergunta do mês aqui.
+#  Toda coluna do Forms que não casar com nenhum `match` acima é tratada
+#  automaticamente como pergunta do mês e vai para os slots Q_MES_1,
+#  Q_MES_2, … da base do mês.
+#
+#  Os slots têm endereço fixo na planilha. Os gráficos apontam para o
+#  slot, não para a pergunta. Todo mês muda só o título e os rótulos.
+#
+#  Declare aqui só se quiser fixar a ordem dos slots ou a tradução:
+# =====================================================================
+perguntas_mes:
+  # - id: correcao_bolsa
+  #   slot: 1
+  #   match: ["recente correcao da bolsa brasileira"]
+  #   en: "Which option best describes your view on the recent correction?"
+  #   opcoes:
+  #     - {id: oportunidade, pt: "Vejo como uma oportunidade de compra…", en: "I see it as a buying opportunity…"}
