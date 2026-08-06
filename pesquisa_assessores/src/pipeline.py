@@ -10,9 +10,13 @@
    PA Base Historica.xlsx   todo o historico, formato longo + agregado
    PA Base Mes Atual.xlsx   so o mes do report, em enderecos fixos
 
- A PA Principal.xlsx nunca e aberta por este script. Ela consome as
- duas planilhas acima via Power Query. E por isso que os 22 links OLE
- dos dois PPTs continuam validos.
+ Este script nao abre planilha de report nenhuma. Quem consome as duas
+ acima, via Power Query, e a PA Report.xlsx -- montada uma vez so (ver
+ powerquery/INSTRUCOES.md) e dai em diante apenas atualizada.
+
+ A separacao e de proposito: os 22 links OLE dos PPTs apontam para a
+ PA Report.xlsx, que nunca e reescrita. Se o pipeline regerasse ela
+ todo mes, os links quebrariam.
 
  -------------------------------------------------------------------
  USO
@@ -584,6 +588,32 @@ def agregar(regs, denominador="respondentes", congelados=None, ate_onda=None):
     return saida
 
 
+def checar_paineis(agg, onda, registro, lp):
+    """Alternativa que nao cabe no painel viraria grafico truncado.
+
+    E o pior tipo de erro: o grafico sai bonito, com o rodape faltando,
+    e vai para o report publicado sem ninguem notar. Melhor parar a
+    rodada e obrigar a decisao.
+    """
+    por_q = defaultdict(list)
+    for a in agg:
+        if a["onda"] == onda and a["familia"] != "mes":
+            por_q[a["q_id"]].append(a)
+
+    problemas = []
+    for p in registro.perguntas:
+        if p.familia not in ("recorrente", "safra"):
+            continue
+        opcoes = por_q.get(p.id, [])
+        if len(opcoes) > lp:
+            fora = sorted(opcoes, key=lambda x: (x["ordem_opcao"], -x["pct"]))[lp:]
+            problemas.append(
+                f"[{p.id}] {len(opcoes)} alternativas, o painel reserva {lp}. "
+                f"Ficariam de fora: "
+                + ", ".join(d["opcao_pt"][:40] for d in fora))
+    return problemas
+
+
 def medias(regs):
     """Media das perguntas de escala e faixa (Ibovespa, Selic, sentimento)."""
     acc = defaultdict(list)
@@ -775,6 +805,150 @@ def escrever_mes(caminho: Path, agg, med, onda: int, cfg, registro: Registro,
           for m in med if m["onda"] in janela],
          [9, 12, 20, 8, 7, 14])
 
+    # =================================================================
+    #  paineis: UM RETANGULO DE ENDERECO FIXO POR PERGUNTA
+    # =================================================================
+    #
+    # E esta aba que sustenta a planilha nova. Cada pergunta ocupa um
+    # bloco em endereco fixo; o grafico e montado UMA vez apontando
+    # para ele e nunca mais precisa ser refeito -- nem quando a
+    # pergunta ganha alternativa, nem quando ela falta num mes.
+    #
+    # A ordem dos blocos vem do REGISTRO (campo `ordem`), nao dos
+    # dados. E isso que garante o endereco: num mes em que a pergunta
+    # nao foi feita, o bloco continua no lugar, vazio, e nada abaixo
+    # dele se desloca.
+    #
+    # Pergunta nova entra com `ordem` MAIOR que as existentes, senao
+    # ela empurra os blocos de baixo e quebra os graficos ja montados.
+    #
+    DESLOC = 1      # o Power Query pousa a linha 1 da origem na linha 2
+    layout = []
+
+    def _end(aba, col, r1, r2=None):
+        """Endereco como ele aparece NA PLANILHA DO REPORT (com o +1)."""
+        a = f"{aba}!${col}${r1 + DESLOC}"
+        return a if r2 is None else f"{a}:${col}${r2 + DESLOC}"
+
+    lp = par.get("linhas_por_painel", 18)
+    ws = wb.create_sheet("paineis")
+    ws.append(["Painéis por pergunta — endereços fixos. "
+               "Não ordene, não filtre, não insira nem remova linhas."])
+    ws["A1"].font = openpyxl.styles.Font(bold=True)
+    for c, w in zip("ABCDEFG", (60, 60, 10, 10, 10, 8, 8)):
+        ws.column_dimensions[c].width = w
+
+    por_q = defaultdict(list)
+    for a in atual:
+        if a["familia"] != "mes":
+            por_q[a["q_id"]].append(a)
+
+    do_painel = sorted(
+        [p for p in registro.perguntas if p.familia in ("recorrente", "safra")],
+        key=lambda p: p.ordem)
+
+    for i, p in enumerate(do_painel):
+        base = 2 + i * (lp + 3)
+        # O corte aqui e so defensivo: `checar_paineis` ja barrou a
+        # rodada antes de chegar neste ponto.
+        dados = sorted(por_q.get(p.id, []),
+                       key=lambda x: (x["ordem_opcao"], -x["pct"]))[:lp]
+        titulo_pt = dados[0]["pergunta_pt"] if dados else p.pt
+        titulo_en = dados[0]["pergunta_en"] if dados else p.en
+        ws.cell(base, 1, titulo_pt).font = openpyxl.styles.Font(bold=True)
+        ws.cell(base, 2, titulo_en)
+        ws.cell(base, 3, p.id)
+        ws.cell(base, 4, dados[0]["safra"] if dados else "")
+        ws.cell(base, 5, dados[0]["base"] if dados else None)
+        for j, t in enumerate(["opcao_pt", "opcao_en", "pct", "pct_ant",
+                               "delta", "n", "base"]):
+            ws.cell(base + 1, j + 1, t).font = openpyxl.styles.Font(
+                italic=True, color="808080")
+        for k in range(lp):
+            if k >= len(dados):
+                break
+            d, r = dados[k], base + 2 + k
+            ant = pct_ant.get(d["chave"])
+            ws.cell(r, 1, d["opcao_pt"])
+            ws.cell(r, 2, d["opcao_en"])
+            ws.cell(r, 3, d["pct"]).number_format = "0%"
+            ws.cell(r, 4, ant).number_format = "0%"
+            ws.cell(r, 5, (d["pct"] - ant) if ant is not None else None)
+            ws.cell(r, 6, d["n"])
+            ws.cell(r, 7, d["base"])
+        r1, r2 = base + 2, base + 1 + lp
+        layout.append(["painel", p.id, titulo_pt[:70],
+                       _end("paineis", "A", base),
+                       _end("paineis", "A", r1, r2),
+                       _end("paineis", "B", r1, r2),
+                       _end("paineis", "C", r1, r2),
+                       _end("paineis", "E", r1, r2)])
+
+    # =================================================================
+    #  tendencias: SERIES TEMPORAIS EM COLUNAS FIXAS
+    # =================================================================
+    #
+    # Uma coluna por serie, na ordem declarada em config.yaml
+    # (`series_do_report`). Acrescentar serie no FIM da lista nao
+    # desloca as colunas ja existentes -- por isso os graficos de
+    # linha (inclusive o da capa) tambem sao montados uma vez so.
+    #
+    # As linhas sao sempre `janela_serie`, alinhadas ao fim: o mes
+    # corrente e sempre a ultima linha, independente de quantas ondas
+    # existirem. Nos primeiros meses sobram linhas em branco no topo.
+    #
+    pedidos = cfg.get("series_do_report") or []
+    pct_por, med_por = defaultdict(dict), defaultdict(dict)
+    for a in agg:
+        pct_por[a["chave"]][a["onda"]] = a["pct"]
+    for m in med:
+        med_por[m["q_id"]][m["onda"]] = m["media"]
+    ibov = cfg.get("ibovespa_fechamento") or {}
+
+    def _valor(spec, o):
+        if spec == "ibovespa":
+            return ibov.get(o)
+        if spec.startswith("media:"):
+            return med_por.get(spec[6:], {}).get(o)
+        return pct_por.get(spec, {}).get(o)
+
+    def _rot(spec):
+        if spec == "ibovespa":
+            return "Ibovespa"
+        if spec.startswith("media:"):
+            p = registro.por_id.get(spec[6:])
+            return f"Média — {p.pt[:50] if p else spec[6:]}"
+        a = next((x for x in agg if x["chave"] == spec), None)
+        return a["opcao_pt"] if a else spec
+
+    ws = wb.create_sheet("tendencias")
+    ws.append(["Séries do report — colunas fixas. Não reordene."])
+    ws["A1"].font = openpyxl.styles.Font(bold=True)
+    ws.append(["data"] + [_rot(s) for s in pedidos])
+    ws.append(["(chave)"] + list(pedidos))
+    for c in ws[2] + ws[3]:
+        c.font = openpyxl.styles.Font(italic=True, color="808080")
+    ws["A2"].font = openpyxl.styles.Font(bold=True)
+
+    n_lin = par["janela_serie"]
+    vazias = n_lin - len(janela)
+    for _ in range(vazias):
+        ws.append([None] * (len(pedidos) + 1))
+    for o in janela:
+        ws.append([datetime(int(str(o)[:4]), int(str(o)[4:]), 1)]
+                  + [_valor(s, o) for s in pedidos])
+    ws.column_dimensions["A"].width = 12
+    for j in range(len(pedidos)):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(j + 2)].width = 13
+
+    t1, t2 = 4, 3 + n_lin
+    for j, spec in enumerate(pedidos):
+        col = openpyxl.utils.get_column_letter(j + 2)
+        layout.append(["tendência", spec, _rot(spec)[:70],
+                       _end("tendencias", col, 2),
+                       _end("tendencias", "A", t1, t2),
+                       "", _end("tendencias", col, t1, t2), ""])
+
     # ---------------- q_mes: SLOTS DE ENDERECO FIXO ----------------
     #
     # Layout deterministico. O grafico do slot 1 aponta sempre para
@@ -816,6 +990,25 @@ def escrever_mes(caminho: Path, agg, med, onda: int, cfg, registro: Registro,
                 ws.cell(r, 3, d["pct"]).number_format = "0%"
                 ws.cell(r, 4, d["n"])
                 ws.cell(r, 5, d["base"])
+        r1, r2 = base + 2, base + 1 + alt
+        layout.append(["pergunta do mês", f"slot {s}",
+                       (dados[0]["pergunta_pt"][:70] if dados else "(vazio)"),
+                       _end("q_mes", "A", base),
+                       _end("q_mes", "A", r1, r2),
+                       _end("q_mes", "B", r1, r2),
+                       _end("q_mes", "C", r1, r2), ""])
+
+    # ---------------- layout: a lista de enderecos, pronta ----------------
+    #
+    # Esta aba existe para voce nao ter que contar linha. Ela diz, para
+    # cada grafico, exatamente qual intervalo apontar na planilha do
+    # report. Os enderecos ja vem com o deslocamento do Power Query
+    # aplicado -- e so copiar e colar em Selecionar Dados.
+    #
+    _aba(wb, "layout",
+         ["tipo", "chave", "descrição", "título", "rótulos_pt",
+          "rótulos_en", "valores", "delta"],
+         layout, [16, 24, 70, 24, 26, 26, 26, 26])
 
     caminho.parent.mkdir(parents=True, exist_ok=True)
     wb.save(caminho)
@@ -946,6 +1139,24 @@ def main():
     store_path = RAIZ / cam["store"]
     saida = Path(cam["saida"])
 
+    lp = par.get("linhas_por_painel", 18)
+
+    def barrar_paineis(agg, onda):
+        """-> True se a rodada tem que parar aqui."""
+        probs = checar_paineis(agg, onda, registro, lp)
+        if not probs:
+            return False
+        print("\n" + "!" * 68)
+        print("  ERRO — painel pequeno demais; o gráfico sairia truncado")
+        print("!" * 68)
+        for x in probs:
+            print("  " + x)
+        print(f"\n  Aumente `linhas_por_painel` (hoje {lp}) em config/config.yaml.")
+        print("  Atenção: isso desloca TODOS os painéis. Depois de aumentar,")
+        print("  refaça os endereços dos gráficos usando a aba `layout`.")
+        print("\n  Nada foi gravado.")
+        return True
+
     # Numero publicado nao muda: ondas ate aqui saem congeladas.
     congelados = carregar_congelados(RAIZ / "config" / "valores_publicados.csv")
     corte = par.get("ultima_onda_publicada")
@@ -968,14 +1179,16 @@ def main():
             print(f"\n{len(erros)} alternativas não declaradas (as maiores):")
             for e in erros[:25]:
                 print("  " + e)
+        agg = agregar(regs, par["denominador"], congelados, corte)
+        ultima = max(int(r["onda"]) for r in regs)
+        if barrar_paineis(agg, ultima):
+            return 1
         if args.conferir:
             return 1 if erros else 0
         salvar_store(store_path, regs)
-        agg = agregar(regs, par["denominador"], congelados, corte)
         med = medias(regs)
         escrever_historica(saida / cam["base_historica"], regs, agg, med, registro)
         print(f"\nGerado: {saida / cam['base_historica']}")
-        ultima = max(int(r["onda"]) for r in regs)
         n_ult = len({r["resp_id"] for r in regs if int(r["onda"]) == ultima})
         escrever_mes(saida / cam["base_mes"], agg, med, ultima, cfg, registro,
                      n_ult, args.bootstrap)
@@ -1010,6 +1223,9 @@ def main():
         print(f"\nNada foi gravado. Corrija perguntas.yaml e rode de novo.")
         print(f"Log: {log_path}")
         return 1
+    if barrar_paineis(agg, onda):
+        print(f"Log: {log_path}")
+        return 1
     if args.conferir:
         print("\n--conferir: nada gravado.")
         return 0
@@ -1021,7 +1237,7 @@ def main():
     print(f"\nGerado: {saida / cam['base_historica']}")
     print(f"Gerado: {saida / cam['base_mes']}")
     print(f"Log:    {log_path}")
-    print("\nAgora abra a PA Principal.xlsx e clique em Dados > Atualizar Tudo.")
+    print("\nAgora abra a PA Report.xlsx e clique em Dados > Atualizar Tudo.")
     return 0
 
 

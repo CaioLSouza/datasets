@@ -1,138 +1,176 @@
-# Migração da PA Principal.xlsx — passo a passo
+# Montar a PA Report.xlsx do zero
 
-Esta é a única parte que precisa ser feita à mão, uma vez só.
+Isto se faz **uma vez**. Depois, todo mês é só `rodar.bat` + Atualizar.
 
-## A restrição que manda em tudo
-
-Os dois PPTs têm **11 links OLE cada (22 no total)**, e cada link aponta para
-uma coordenada exata:
-
-```
-\\xpdocs\...\PA Principal.xlsx ! Charts ! [PA Principal.xlsx]Charts Gráfico 1-1
-                ↑ caminho          ↑ aba        ↑ nome do objeto de gráfico
-```
-
-Isso significa três coisas, e elas não são negociáveis:
-
-1. **A PA Principal.xlsx continua sendo o arquivo linkado.** Planilha nova = 22 links mortos.
-2. **A aba `Charts` não muda de nome** e os objetos de gráfico dela não são apagados nem recriados.
-3. Tudo que a gente muda fica **por baixo** da aba `Charts`: na aba `Base`.
-
-Se um link quebrar, o conserto é: no PPT, botão direito no gráfico >
-*Editar Links* > apontar de novo. Dá para fazer, mas é chato — o desenho
-abaixo evita chegar nesse ponto.
+A PA Principal.xlsx antiga não é mais tocada nem apagada — ela vira
+arquivo. Guarde-a: é dela que sai o congelamento do histórico, e é dela
+que vamos copiar os gráficos.
 
 ---
 
-## Antes de começar
+## Por que jogar a PA Principal fora
 
-Rode os três comandos da seção "Instalação" do `LEIA-ME.md`, nesta ordem:
-congelar → bootstrap → reconciliar. O `reconciliar.py` tem que fechar o
-bloco 1 em 100% antes de você encostar na planilha.
+Ela carrega quatro problemas que nenhum remendo resolve:
 
-Isso garante o que importa: **nenhum número já publicado muda.** As ondas
-históricas saem congeladas com o valor que foi ao ar; só as ondas novas são
-calculadas do bruto.
+- **O COUNTIF perde a última opção marcada.** O padrão é
+  `"*" & alternativa & ";*"`, que exige `;` *depois* da alternativa.
+  Quando o Forms não põe `;` no fim da célula, a última opção de cada
+  respondente não entra na conta. Atinge 84,6% das células de múltipla
+  escolha em jul/2026.
+- **11 blocos mortos** de perguntas do mês antigas, ocupando linhas.
+- **Uma linha duplicada** em `apetite_risco` publicando 12,15% e 21,50%
+  para a mesma alternativa, ao mesmo tempo.
+- **As fórmulas acham a pergunta por texto exato** (`MATCH` no cabeçalho
+  da Raw Data). Qualquer letra diferente no Forms cria coluna nova.
 
----
-
-## Etapa 1 — religar a Base ao agregado
-
-1. Na PA Principal, crie a consulta `PastaBases` (bloco [1] de `consultas.m`)
-   e carregue como **Apenas Criar Conexão**.
-
-2. Crie a consulta `agregado` (bloco [2]) e carregue **numa aba nova** chamada
-   `agregado`. Confirme o nome da tabela em *Design da Tabela > Nome da Tabela*.
-
-3. Cole a coluna `chave` do arquivo `_saida/chaves_base.csv` (gerado pelo
-   `congelar_historico.py`) na **coluna CC** da aba Base, a partir da linha 1.
-
-   `CC` é a primeira coluna livre à direita — a Base usa até `CB` hoje. Colar
-   ali não insere nada e **nenhuma referência existente se desloca**: nem as da
-   aba `Charts`, nem as da `Gráfico capa`.
-
-4. Numa coluna de onda qualquer (ex.: `CB`, jul/26), na primeira linha de
-   alternativa (ex.: `CB8`), troque a fórmula por:
-
-```
-=IF(COUNTIFS(agregado[chave],$CC8,agregado[onda],CB$1)=0,"",SUMIFS(agregado[pct],agregado[chave],$CC8,agregado[onda],CB$1))
-```
-
-   Arraste para baixo em todas as linhas que têm chave em `CC`, e para a
-   esquerda até a primeira coluna de onda que quiser religar.
-
-   Use a coluna `pct` — é ela que respeita o congelamento. A `pct_calculado`
-   é só auditoria; não aponte gráfico para ela.
-
-   Por que `SUMIFS` e não `INDEX/MATCH`: o par (chave, onda) é único, então o
-   `SUMIFS` devolve o valor exato — e ele não depende de casar cabeçalho de
-   coluna, que quebraria com nome de mês ou Excel em outro idioma.
-
-5. Linhas com `CC` vazio são blocos de perguntas do mês antigas. Deixe as
-   fórmulas velhas ali ou apague o bloco. Não atrapalham.
-
-6. **Confira antes de seguir:** os valores das colunas de onda antigas têm que
-   continuar exatamente como estavam. Se algum mudou, pare — ou a chave em `CC`
-   está desalinhada, ou o congelamento não foi gerado.
-
-7. A partir daqui, **mês novo não exige arrastar nada**: você só põe o código
-   da onda (ex.: `202608`) na linha 1 de uma coluna nova e copia a fórmula da
-   coluna anterior. O denominador correto já vem do `agregado`.
+O preço de recomeçar é **refazer os 22 links OLE** — 11 por PPT. A
+Etapa 3 abaixo mostra um atalho que costuma resolver os 11 de uma vez.
 
 ---
 
-## Etapa 2 — os gráficos da pergunta do mês
+## Etapa 0 — gerar as bases
 
-1. Crie a consulta `q_mes` (bloco [7]) e carregue numa aba nova `q_mes`.
+Se ainda não fez, rode os três comandos da seção "Instalação" do
+`LEIA-ME.md`: congelar → bootstrap → reconciliar.
 
-2. Os slots têm endereço fixo. Com `linhas_por_slot: 12` (o padrão):
+O `reconciliar.py` tem que fechar o bloco 1 em 100%. Isso é o que
+garante que nenhum número já publicado mudou de valor na virada.
 
-   | Slot | Título | Rótulos PT | Rótulos EN | Valores |
-   |------|--------|-----------|-----------|---------|
-   | 1 | `q_mes!$A$2` | `q_mes!$A$4:$A$15` | `q_mes!$B$4:$B$15` | `q_mes!$C$4:$C$15` |
-   | 2 | `q_mes!$A$17` | `q_mes!$A$19:$A$30` | `q_mes!$B$19:$B$30` | `q_mes!$C$19:$C$30` |
-   | 3 | `q_mes!$A$32` | `q_mes!$A$34:$A$45` | `q_mes!$B$34:$B$45` | `q_mes!$C$34:$C$45` |
-   | 4 | `q_mes!$A$47` | `q_mes!$A$49:$A$60` | `q_mes!$B$49:$B$60` | `q_mes!$C$49:$C$60` |
+Ao fim você tem, em `\\xpdocs\...\Pesquisa assessores\bases\`:
 
-   (fórmula geral: o slot *s* começa na linha `2 + (s-1) × 15`)
-
-3. Monte **uma vez** um gráfico por slot na aba `Charts`, apontando para esses
-   endereços. Cole no PPT como link, como você já faz.
-
-4. Todo mês o gráfico se atualiza sozinho. Linhas sobrando ficam em branco:
-   configure em *Selecionar Dados > Células Ocultas e Vazias > Mostrar como:
-   Vazio*.
-
-**Não ordene, filtre nem insira linhas na aba `q_mes`** — os gráficos apontam
-para endereços absolutos.
-
-Continua manual: a **tradução** da pergunta do mês. Ou você digita na coluna B,
-ou declara em `perguntas_mes` no `config/perguntas.yaml` e ela passa a sair
-pronta.
+- `PA Base Historica.xlsx`
+- `PA Base Mes Atual.xlsx`  ← é dela que o report se alimenta
 
 ---
 
-## Etapa 3 — opcionais, quando quiser
+## Etapa 1 — a planilha nova e as consultas
 
-- **`serie`** (bloco [6]): janela móvel para os gráficos de linha, incluindo a
-  aba `Gráfico capa`. Já vem com a data pronta.
-- **`meta`** (bloco [8]): título do mês em PT e EN, nº de respostas. Use nos
-  títulos dos slides em vez de digitar o mês na mão.
-- **`raw_norm`** (bloco [4]): a Raw Data com cabeçalho canônico e alternativas
-  já normalizadas. **Não use para alimentar a Base** — as fórmulas COUNTIFS
-  recalculariam o histórico e mudariam número publicado. Serve para conferência
-  e para recorte ad-hoc.
-- **`respostas`** (bloco [10]): o grão respondente a respondente, ~124 mil
-  linhas. Para cortes por região, por perfil de alocação, etc.
+1. Crie uma pasta de trabalho nova em
+   `\\xpdocs\Research\Equities\Estrategia\Reports\Pesquisa assessores\`
+   chamada **`PA Report.xlsx`**.
+
+   O nome importa: é ele que vai dentro dos 22 links dos PPTs. Depois
+   de linkado, **não renomeie e não mude de pasta**.
+
+2. Crie a consulta `PastaBases` (bloco [1] de `consultas.m`) e carregue
+   como **Apenas Criar Conexão**.
+
+3. Crie as cinco seguintes — `paineis`, `tendencias`, `q_mes`, `meta`,
+   `layout` — e carregue cada uma **numa aba nova de mesmo nome**.
+
+   Nenhuma delas promove cabeçalho, e isso é de propósito: as três
+   primeiras têm endereço fixo, e promover cabeçalho deslocaria tudo
+   em uma linha. Está explicado no topo do `consultas.m`.
+
+4. Abra a aba `layout`. Ela lista, para cada gráfico, exatamente qual
+   intervalo apontar — com o deslocamento do Power Query já aplicado.
+   Você não precisa contar linha nenhuma.
+
+   São 21 fontes de gráfico: 12 painéis de pergunta, 5 séries
+   temporais e 4 slots de pergunta do mês.
 
 ---
 
-## Atualização mensal, depois de tudo montado
+## Etapa 2 — trazer os gráficos, com o visual intacto
+
+A ideia é **não redesenhar nada**. Os gráficos da PA Principal já têm
+a formatação certa; só precisam olhar para outro lugar.
+
+1. Abra a PA Principal.xlsx e a PA Report.xlsx lado a lado.
+
+2. Na PA Principal, botão direito na aba `Charts` > **Mover ou Copiar**
+   > para a PA Report.xlsx > marque **Criar uma cópia**.
+
+   Isso traz os gráficos com toda a formatação **e preserva os nomes
+   dos objetos** ("Gráfico 1-1" etc.). Guardar esses nomes é o que
+   torna a Etapa 3 fácil — não renomeie nenhum deles.
+
+3. Faça o mesmo com a aba `Gráfico capa`.
+
+4. Os gráficos vão chegar apontando para a PA Principal antiga. Um por
+   um, clique no gráfico > **Selecionar Dados** > e troque cada série
+   para o endereço correspondente da aba `layout`:
+
+   | O que a aba `layout` dá | Onde entra em Selecionar Dados |
+   |---|---|
+   | `rótulos_pt` (ou `rótulos_en`, no PPT em inglês) | Rótulos do Eixo Horizontal |
+   | `valores` | Valores da série |
+   | `título` | Nome da série |
+   | `delta` | segunda série, se o gráfico mostra variação |
+
+5. Nos gráficos de linha, o eixo horizontal é sempre
+   `tendencias!$A$5:$A$34` (as datas) — está na coluna `rótulos_pt` das
+   linhas de tipo "tendência".
+
+6. Nos quatro slots de pergunta do mês, marque
+   **Selecionar Dados > Células Ocultas e Vazias > Mostrar como: Vazio**.
+   Assim as linhas não usadas somem do gráfico em vez de virar zero.
+
+7. Apague da PA Report qualquer aba que tenha vindo junto e não seja
+   usada. As abas `paineis`, `tendencias`, `q_mes`, `meta` e `layout`
+   são as únicas que o Power Query alimenta.
+
+---
+
+## Etapa 3 — os 22 links dos PPTs
+
+Como você copiou a aba `Charts` inteira, os nomes dos objetos são os
+mesmos de antes. Só o arquivo mudou. Então tente primeiro o caminho
+curto:
+
+1. No PPT, **Arquivo > Informações > Editar Links para Arquivos**
+   (ou botão direito num gráfico > *Objeto Gráfico Vinculado* >
+   *Links*).
+
+2. Selecione um link > **Alterar Fonte** > aponte para a
+   `PA Report.xlsx`.
+
+3. Veja se os outros 10 links do mesmo PPT passaram a apontar para o
+   arquivo novo sozinhos. O PowerPoint costuma reapontar todos os
+   links que dividiam a mesma origem.
+
+4. Se não passaram, repita o passo 2 para cada um. São 11 por PPT.
+
+5. **Atualizar Links** e confira slide a slide.
+
+Se algum gráfico vier quebrado, o caminho longo é: apagar o objeto no
+slide, copiar o gráfico da PA Report e colar com
+**Colar Especial > Colar Vínculo**. Isso refaz o link do zero, mas você
+perde o posicionamento — anote onde estava antes de apagar.
+
+> Não testei esta etapa: não tenho Excel nem PowerPoint aqui. Os passos
+> vêm do formato dos links que li dentro dos dois arquivos. Faça numa
+> **cópia** dos PPTs antes de mexer nos originais.
+
+---
+
+## A rotina, depois que estiver montado
 
 1. Exporte o Forms para `input_forms\`
 2. Duplo clique em `rodar.bat`
-3. Abra a PA Principal > **Dados > Atualizar Tudo**
+3. Abra a PA Report.xlsx > **Dados > Atualizar Tudo**
 4. Abra os PPTs > **Atualizar Links**
 
-Se o passo 2 parar com erro, é porque entrou alternativa nova na pesquisa. O
-log diz qual é e o que fazer. Nada é gravado até você resolver.
+Se o passo 2 parar com erro, é porque entrou alternativa nova na
+pesquisa. O log diz qual é e o que fazer. Nada é gravado até você
+resolver.
+
+---
+
+## O que quebra os endereços (e como não quebrar)
+
+Os gráficos apontam para intervalos absolutos. Três coisas os
+deslocam — todas evitáveis:
+
+| Mudança | Efeito | Como fazer sem quebrar |
+|---|---|---|
+| Pergunta recorrente nova em `perguntas.yaml` | Se o `ordem` for menor que o de alguma existente, empurra os blocos de baixo | Dê a ela o **maior `ordem`** da lista. O bloco entra no fim e nada se move. |
+| `linhas_por_painel` no config | Desloca **todos** os painéis | Só mexa se um painel estourar — e aí refaça os endereços pela aba `layout`. |
+| Série nova em `series_do_report` | Se inserida no meio, desloca as colunas seguintes | Acrescente sempre **no fim da lista**. |
+
+Se um painel estourar, o pipeline avisa alto na hora de rodar, dizendo
+quais alternativas ficaram de fora. Ele não trunca em silêncio.
+
+Ordenar, filtrar ou inserir linha nas abas `paineis`, `tendencias` e
+`q_mes` também desloca tudo. Não mexa nelas — são alimentadas pelo
+Power Query.

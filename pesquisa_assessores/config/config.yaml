@@ -52,6 +52,15 @@ parametros:
   # A capa hoje usa 25 pontos — mantenha folga.
   janela_serie: 30
 
+  # Quantas linhas cada painel de pergunta reserva na aba `paineis`.
+  # É o teto de alternativas por pergunta. Hoje a maior é `setores`,
+  # com 15 + "Outros".
+  #
+  # MEXER AQUI DESLOCA TODOS OS BLOCOS e quebra os gráficos já
+  # montados. Se um dia precisar aumentar, conte com refazer os
+  # endereços de todos eles (a aba `layout` mostra os novos).
+  linhas_por_painel: 18
+
   # Quantos slots de pergunta do mês reservar na base do mês.
   # Cada slot tem endereço fixo; os gráficos apontam para o slot.
   slots_pergunta_mes: 4
@@ -70,6 +79,29 @@ parametros:
   # Fecha a rodada com erro se aparecer alternativa não declarada acima
   # do limite definido em perguntas.yaml. Deixe true.
   falhar_em_desconhecida: true
+
+# =====================================================================
+#  SÉRIES TEMPORAIS DO REPORT  (aba `tendencias` da base do mês)
+# =====================================================================
+#  Uma coluna por item desta lista, NA ORDEM em que estão aqui.
+#  É daqui que saem os gráficos de linha, inclusive o da capa.
+#
+#  Três formas de escrever:
+#     q_id|opcao_id          o percentual daquela alternativa
+#     q_id|safra|opcao_id    idem, para pergunta que tem safra
+#     media:q_id             a média (sentimento 0-10, Ibovespa, Selic)
+#     ibovespa               o fechamento digitado lá embaixo
+#
+#  ACRESCENTE SEMPRE NO FIM. Inserir no meio desloca as colunas e
+#  quebra os gráficos de linha já montados. Remover, idem — se uma
+#  série sair de cena, deixe a linha e apague o gráfico.
+# =====================================================================
+series_do_report:
+  - intencao_rv|aumentar
+  - intencao_rv|manter
+  - intencao_rv|diminuir
+  - media:sentimento_bolsa
+  - ibovespa
 
 # ---------------------------------------------------------------------
 # Série do Ibovespa usada no gráfico da capa (hoje digitada à mão na

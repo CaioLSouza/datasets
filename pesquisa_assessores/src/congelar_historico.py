@@ -18,9 +18,16 @@
  linha so emenda a serie - os valores de cada mes seguem identicos ao
  que foi publicado.
 
- SAIDA (os dois vao para config\\, versionados junto com o registro)
-   config/valores_publicados.csv   onda;chave;pct        <- o congelado
-   _saida/chaves_base.csv          linha;chave;...       <- p/ colar em CC
+ SAIDA
+   config/valores_publicados.csv   onda;chave;pct
+       O congelado. E este arquivo que o pipeline le para nao
+       recalcular o que ja foi publicado. Versione junto com o
+       registro de perguntas.
+
+   _saida/chaves_base.csv          linha;chave;texto;reconhecido_como
+       O mapa de como cada linha da Base antiga foi interpretada.
+       Nao e usado pelo pipeline -- serve para voce auditar o
+       congelamento e para achar os blocos mortos da planilha velha.
 
  USO
    python congelar_historico.py "\\\\xpdocs\\...\\PA Principal.xlsx"

@@ -5,12 +5,16 @@
 ```
 1. Exportar o Forms  ──►  input_forms\
 2. Duplo clique em   ──►  rodar.bat
-3. PA Principal.xlsx ──►  Dados > Atualizar Tudo
+3. PA Report.xlsx    ──►  Dados > Atualizar Tudo
 4. Os dois PPTs      ──►  Atualizar Links
 ```
 
 O passo 2 é o único que é novo. Ele substitui "colar na Raw Data, arrastar as
 fórmulas para a direita, conferir se apareceu pergunta nova".
+
+A `PA Report.xlsx` é uma planilha nova, montada uma vez (ver
+`powerquery/INSTRUCOES.md`). A **PA Principal.xlsx antiga sai de cena** — vira
+arquivo, não é mais tocada. Os motivos estão logo abaixo.
 
 ---
 
@@ -21,18 +25,35 @@ Lê o export do Forms e gera dois arquivos na pasta `bases\`:
 | Arquivo | Abas | Tamanho |
 |---|---|---|
 | `PA Base Historica.xlsx` | `agregado` (todo o histórico), `matriz` (chave × onda), `respostas` (grão respondente, ~124 mil linhas), `raw_norm` (a Raw Data limpa), `medias`, `dicionario` | ~6 MB |
-| `PA Base Mes Atual.xlsx` | `report`, `serie`, `q_mes`, `medias`, `meta` | ~130 KB |
+| `PA Base Mes Atual.xlsx` | **`paineis`**, **`tendencias`**, `q_mes`, **`layout`**, `meta`, `report`, `serie`, `medias` | ~150 KB |
 
 E um log em `_logs\rodada_AAAAMM.txt` dizendo exatamente o que reconheceu.
 
 **Se entrar alternativa nova na pesquisa, ele para e não grava nada.** O log
 diz qual é e o que fazer. A base nunca fica meio atualizada.
 
+### As três abas que sustentam os gráficos
+
+- **`paineis`** — um retângulo de endereço fixo por pergunta, com pct, pct do
+  mês anterior e delta. 12 blocos.
+- **`tendencias`** — as séries temporais em colunas fixas, uma por item de
+  `series_do_report` no config. Alimenta os gráficos de linha e a capa.
+- **`q_mes`** — 4 slots de endereço fixo para a pergunta que muda todo mês.
+
+Endereço fixo é o ponto: **o gráfico é montado uma vez e nunca mais precisa ser
+refeito** — nem quando a pergunta ganha alternativa, nem quando ela falta num
+mês. Um mês sem `selic_alvo`, por exemplo, deixa o bloco dela vazio no lugar de
+sempre; nada abaixo se desloca.
+
+A aba **`layout`** lista os 21 endereços prontos para copiar, já com o
+deslocamento do Power Query aplicado. Você nunca conta linha.
+
 ---
 
-## Por que a planilha parava de fazer sentido
+## Por que a PA Principal foi aposentada
 
-O diagnóstico da PA Principal atual, medido nos dados:
+O diagnóstico dela, medido nos dados — é o que justificou recomeçar em vez de
+remendar:
 
 **A Raw Data tinha 79 colunas, 55 delas ~98% vazias.** Cada pergunta do mês
 virava uma coluna nova para sempre. Em 3 anos foram 37 ondas e 6.735 respostas
@@ -80,6 +101,16 @@ demais ondas não ocorre.
 
 O pipeline não tem como errar isso: ele separa por `;` e compara token a token,
 então sobra ou falta de separador é indiferente.
+
+### O custo de recomeçar
+
+Um só, e é uma vez: **os 22 links OLE dos PPTs precisam ser refeitos** — 11 por
+PPT. A `powerquery/INSTRUCOES.md` tem um atalho que costuma resolver os 11 de
+uma vez, porque copiamos a aba `Charts` inteira e os nomes dos objetos vão
+junto.
+
+O visual dos slides não muda: os gráficos são os mesmos, só passam a olhar
+para outro lugar.
 
 ---
 
@@ -134,9 +165,26 @@ por dentro. Resumo:
 | Saiu alternativa | Não faz nada. Ela só para de aparecer. |
 | **Ibovespa rolou de 2026 para 2027** | **Nada.** O regex já pega qualquer ano. |
 | Entrou pergunta do mês | **Nada.** Vira slot automaticamente. |
+| Entrou pergunta **recorrente** nova | Adiciona com o **maior `ordem`** da lista. Ver abaixo. |
 
 O `id` de uma pergunta ou alternativa **nunca muda** depois de criado — é ele
 que segura o histórico.
+
+### A única regra que protege os gráficos
+
+Os blocos da aba `paineis` saem na ordem do campo `ordem` do registro. Uma
+pergunta recorrente nova com `ordem` menor que as existentes **empurra os
+blocos de baixo** e quebra os gráficos já montados.
+
+Então: pergunta nova recebe `ordem` maior que todas. Hoje a maior é 120
+(`selic_alvo`), então a próxima é 130. O bloco entra no fim e nada se move.
+
+Mesma lógica em `series_do_report` (config.yaml): acrescente sempre **no fim da
+lista**, nunca no meio.
+
+Se um painel estourar as `linhas_por_painel` (hoje 18, e a maior pergunta usa
+15), o pipeline **para de rodar e diz quais alternativas ficariam de fora**. Ele
+não trunca calado.
 
 ### O Ibovespa rolando de ano
 
@@ -175,15 +223,24 @@ pesquisa_assessores\
 │   ├── congelar_historico.py   ← congela o publicado + gera as chaves da Base
 │   └── reconciliar.py          ← confere a saída contra o publicado
 ├── powerquery\
-│   ├── consultas.m             ← blocos para colar na PA Principal
-│   └── INSTRUCOES.md           ← a migração, passo a passo
+│   ├── consultas.m             ← as consultas da PA Report.xlsx
+│   └── INSTRUCOES.md           ← como montar a planilha nova, 1 vez
 ├── _dados\respostas.csv        ← fonte da verdade (local, append-only)
 ├── _logs\                      ← log de cada rodada
-└── _saida\                     ← chaves_base.csv
+└── _saida\chaves_base.csv      ← o mapa da Base antiga (auditoria)
 ```
 
-Na rede, nada muda de lugar. Só aparece uma pasta `bases\` ao lado da
-PA Principal.
+Na rede, ao lado da PA Principal antiga, aparecem duas coisas:
+
+```
+Pesquisa assessores\
+├── PA Principal.xlsx        ← ARQUIVO. não é mais tocada.
+├── PA Report.xlsx           ← a planilha nova, linkada pelos PPTs
+├── input_forms\             ← você larga o export do Forms aqui
+└── bases\                   ← o pipeline escreve aqui
+    ├── PA Base Historica.xlsx
+    └── PA Base Mes Atual.xlsx
+```
 
 ---
 
@@ -221,7 +278,15 @@ python src\pipeline.py --bootstrap "\\xpdocs\Research\Equities\Estrategia\Report
 python src\reconciliar.py "\\xpdocs\Research\Equities\Estrategia\Reports\Pesquisa assessores\PA Principal.xlsx"
 ```
 
-O bloco 1 tem que dar 100%. Depois disso é só o `rodar.bat` todo mês.
+O bloco 1 tem que dar 100%. É ele que prova que nenhum número publicado mudou.
+
+**4. Montar a `PA Report.xlsx`:**
+
+Siga a `powerquery/INSTRUCOES.md`. São três etapas: criar as 6 consultas, trazer
+os gráficos da PA Principal com o visual intacto, e refazer os 22 links dos
+PPTs.
+
+Depois disso é só o `rodar.bat` todo mês.
 
 ---
 
@@ -239,24 +304,24 @@ Coisas que valem, mas que não fazem parte do que foi pedido:
    apontando para a pasta `input_forms`. Ele devolve código de erro quando algo
    precisa de atenção, então dá para receber aviso.
 
-3. **Aposentar a aba `Raw Data`.** Depois que a Base estiver lendo do
-   `agregado`, ela não é mais usada por fórmula nenhuma. Guarde uns meses e
-   depois pode sair — o grão inteiro está na aba `respostas` da base histórica.
+3. **Confirmar a linha duplicada de `apetite_risco`.** A Base antiga tem duas
+   linhas para *"Melhora na recuperação econômica global"*, publicando 12,15% e
+   21,50% em jul/2026. O congelador ficou com 21,50% (a linha de baixo, sem o
+   `;` colado no rótulo) e avisa toda vez que roda. Se você confirmar que é essa
+   mesmo, o aviso pode ser ignorado para sempre — só não vale esquecer dele.
 
-4. **Limpar os blocos mortos da Base.** São 11 blocos de perguntas do mês
-   antigas ainda ocupando linhas. O `congelar_historico.py` lista quais são,
-   em `_saida/chaves_base.csv` (linhas marcadas como "fora de bloco conhecido").
-
-5. **Resolver a linha duplicada de `apetite_risco`.** A Base tem duas linhas
-   para *"Melhora na recuperação econômica global"*, uma delas com `;` colado
-   no rótulo. Depois de decidir qual vale, apague a outra.
-
-6. **Padronizar as alternativas no próprio Forms.** Metade dos aliases existe
+4. **Padronizar as alternativas no próprio Forms.** Metade dos aliases existe
    porque o texto da alternativa foi reescrito sem necessidade. Congelar o
    texto no Forms é mais barato que cadastrar alias depois.
 
-7. **Um dia, restatear o histórico.** Se em algum momento fizer sentido
+5. **Um dia, restatear o histórico.** Se em algum momento fizer sentido
    republicar a série corrigida (sem o bug do `;`, com denominador certo), é
    uma linha: baixe `ultima_onda_publicada` no `config.yaml` e rode de novo. A
    coluna `pct_calculado` já mostra hoje o que sairia. Enquanto isso não for
    uma decisão sua, nada muda.
+
+6. **Arquivar a PA Principal.** Ela ainda é necessária: é dela que sai o
+   congelamento (`congelar_historico.py`) e dela que vieram os gráficos. Depois
+   que a PA Report estiver rodando há uns meses, mova-a para uma subpasta
+   `arquivo\` — mas **não apague**: sem ela não dá para regerar o
+   `valores_publicados.csv` do zero.

@@ -20,7 +20,7 @@ if %CODIGO% NEQ 0 (
     echo  ***********************************************
 ) else (
     echo  Pronto. Agora:
-    echo    1^) abra a PA Principal.xlsx
+    echo    1^) abra a PA Report.xlsx
     echo    2^) Dados ^> Atualizar Tudo
     echo    3^) abra os dois PPTs e Atualizar Links
 )

@@ -1,5 +1,5 @@
 // =====================================================================
-//  CONSULTAS POWER QUERY — PA Principal.xlsx
+//  CONSULTAS POWER QUERY — PA Report.xlsx  (a planilha nova)
 // =====================================================================
 //
 //  Cole um bloco por vez em:
@@ -9,18 +9,30 @@
 //
 //  Comece SEMPRE pela consulta `PastaBases`. As outras dependem dela.
 //
-//  Onde cada uma deve ser carregada:
-//     PastaBases ................ Apenas Criar Conexão
-//     agregado .................. Tabela, em uma aba nova `agregado`
-//     matriz .................... Tabela, em uma aba nova `matriz`
-//     raw_norm .................. Tabela, em uma aba nova `raw_norm`
-//     report / serie / q_mes .... Tabela, em abas novas de mesmo nome
-//     meta ...................... Tabela, em uma aba nova `meta`
-//     medias .................... Tabela, em uma aba nova `medias`
+//  ---------------------------------------------------------------
+//  AS 5 QUE SUSTENTAM O REPORT  (estas são obrigatórias)
+//  ---------------------------------------------------------------
+//     PastaBases ...... Apenas Criar Conexão
+//     paineis ......... Tabela, em uma aba nova `paineis`
+//     tendencias ...... Tabela, em uma aba nova `tendencias`
+//     q_mes ........... Tabela, em uma aba nova `q_mes`
+//     meta ............ Tabela, em uma aba nova `meta`
+//     layout .......... Tabela, em uma aba nova `layout`   (referência)
 //
-//  IMPORTANTE: nunca carregue nada por cima das abas `Charts`,
-//  `Gráfico capa` ou `Summary`. São elas que sustentam os 22 links
-//  OLE dos dois PPTs.
+//  ---------------------------------------------------------------
+//  ATENÇÃO — POR QUE NENHUMA DELAS PROMOVE CABEÇALHO
+//  ---------------------------------------------------------------
+//  `paineis`, `tendencias` e `q_mes` têm layout de ENDEREÇO FIXO: os
+//  gráficos apontam para intervalos absolutos. Promover cabeçalho
+//  comeria uma linha e deslocaria tudo em 1.
+//
+//  Do jeito que está, o Power Query põe um cabeçalho genérico
+//  (Column1, Column2, ...) na linha 1 e a linha N da origem cai na
+//  linha N+1 da planilha. Esse deslocamento de 1 JÁ ESTÁ APLICADO nos
+//  endereços que a aba `layout` mostra — é só copiar de lá.
+//
+//  Depois de carregar: não ordene, não filtre, não insira e não
+//  remova linhas nessas três abas.
 // =====================================================================
 
 
@@ -32,10 +44,92 @@
 
 
 // ---------------------------------------------------------------------
-// [2] agregado                                     (histórico completo)
+// [2] paineis                    (um bloco por pergunta — OBRIGATÓRIA)
 // ---------------------------------------------------------------------
-// Uma linha por onda x pergunta x alternativa. É a tabela que a aba
-// Base vai consultar depois da migração (ver INSTRUCOES.md, Etapa 2).
+// É desta aba que sai a maioria dos gráficos do report: um retângulo
+// de endereço fixo por pergunta, com pct, pct do mês anterior e delta.
+//
+// Cada bloco fica no MESMO lugar todo mês, mesmo que a pergunta não
+// tenha sido feita naquele mês (aí ele fica vazio). É isso que faz o
+// gráfico nunca precisar ser refeito.
+let
+    Arquivo = PastaBases & "\PA Base Mes Atual.xlsx",
+    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
+    Aba     = Fonte{[Item="paineis", Kind="Sheet"]}[Data]
+in
+    Aba
+
+
+// ---------------------------------------------------------------------
+// [3] tendencias                 (séries temporais — OBRIGATÓRIA)
+// ---------------------------------------------------------------------
+// Uma coluna por série, na ordem de `series_do_report` no config.yaml.
+// Alimenta os gráficos de linha, incluindo o da capa.
+//
+// Coluna A = data. As linhas são sempre `janela_serie`, alinhadas ao
+// fim — o mês corrente é sempre a última linha.
+let
+    Arquivo = PastaBases & "\PA Base Mes Atual.xlsx",
+    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
+    Aba     = Fonte{[Item="tendencias", Kind="Sheet"]}[Data]
+in
+    Aba
+
+
+// ---------------------------------------------------------------------
+// [4] q_mes                      (pergunta do mês — OBRIGATÓRIA)
+// ---------------------------------------------------------------------
+// Quatro slots de endereço fixo. A pergunta que muda todo mês cai
+// sozinha no slot 1; o gráfico é montado uma vez e só troca o conteúdo.
+let
+    Arquivo = PastaBases & "\PA Base Mes Atual.xlsx",
+    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
+    Aba     = Fonte{[Item="q_mes", Kind="Sheet"]}[Data]
+in
+    Aba
+
+
+// ---------------------------------------------------------------------
+// [5] meta                       (cabeçalho do mês — OBRIGATÓRIA)
+// ---------------------------------------------------------------------
+// onda, título em PT e EN, nº de respostas, data de geração.
+// Use nos títulos dos slides em vez de digitar o mês na mão.
+let
+    Arquivo = PastaBases & "\PA Base Mes Atual.xlsx",
+    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
+    Aba     = Fonte{[Item="meta", Kind="Sheet"]}[Data],
+    Renom   = Table.RenameColumns(Aba, {{"Column1", "campo"}, {"Column2", "valor"}})
+in
+    Renom
+
+
+// ---------------------------------------------------------------------
+// [6] layout                     (os endereços, prontos — REFERÊNCIA)
+// ---------------------------------------------------------------------
+// A lista de qual intervalo apontar em cada gráfico, já com o
+// deslocamento do Power Query aplicado. É daqui que você copia os
+// endereços ao montar a planilha — e é aqui que você confere depois,
+// se algum dia mexer em `linhas_por_painel` ou `janela_serie`.
+let
+    Arquivo = PastaBases & "\PA Base Mes Atual.xlsx",
+    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
+    Aba     = Fonte{[Item="layout", Kind="Sheet"]}[Data],
+    Cab     = Table.PromoteHeaders(Aba, [PromoteAllScalars=true])
+in
+    Cab
+
+
+// =====================================================================
+//  DAQUI PARA BAIXO É OPCIONAL — nada do report depende destas.
+//  Carregue só se for fazer análise ad-hoc.
+// =====================================================================
+
+
+// ---------------------------------------------------------------------
+// [7] agregado                            (histórico completo, longo)
+// ---------------------------------------------------------------------
+// Uma linha por onda x pergunta x alternativa, de jul/2023 até hoje.
+// Para tabela dinâmica, recorte novo, conferência.
 //
 // Use SEMPRE a coluna `pct` — é ela que respeita o congelamento:
 //   fonte = "publicado"  -> o número que já foi ao ar, intocado
@@ -60,63 +154,11 @@ in
 
 
 // ---------------------------------------------------------------------
-// [3] matriz                                  (chave x onda, retângulo)
+// [8] serie                        (histórico longo, janela do report)
 // ---------------------------------------------------------------------
-// Mesmo formato da aba Base: linha = alternativa, coluna = onda.
-// Útil se você preferir INDEX/MATCH em vez de SUMIFS.
-let
-    Arquivo = PastaBases & "\PA Base Historica.xlsx",
-    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
-    Aba     = Fonte{[Item="matriz", Kind="Sheet"]}[Data],
-    Cab     = Table.PromoteHeaders(Aba, [PromoteAllScalars=true])
-in
-    Cab
-
-
-// ---------------------------------------------------------------------
-// [4] raw_norm                          (a Raw Data limpa — ETAPA 1)
-// ---------------------------------------------------------------------
-// Mesmo formato largo da Raw Data de hoje, porém com cabeçalho canônico,
-// rótulos antigos já convertidos nos atuais e SEMPRE com ';' no fim de
-// cada célula de múltipla escolha. É o que faz as fórmulas COUNTIFS
-// atuais pararem de perder a última opção marcada.
-let
-    Arquivo = PastaBases & "\PA Base Historica.xlsx",
-    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
-    Aba     = Fonte{[Item="raw_norm", Kind="Sheet"]}[Data],
-    Cab     = Table.PromoteHeaders(Aba, [PromoteAllScalars=true]),
-    Tipado  = Table.TransformColumnTypes(Cab, {{"Survey", Int64.Type}})
-in
-    Tipado
-
-
-// ---------------------------------------------------------------------
-// [5] report                                   (só o mês do report)
-// ---------------------------------------------------------------------
-// Já traz pct, pct_ant e delta contra o mês anterior — o delta mensal
-// sai de graça, sem fórmula na planilha.
-let
-    Arquivo = PastaBases & "\PA Base Mes Atual.xlsx",
-    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
-    Aba     = Fonte{[Item="report", Kind="Sheet"]}[Data],
-    Cab     = Table.PromoteHeaders(Aba, [PromoteAllScalars=true]),
-    Tipado  = Table.TransformColumnTypes(Cab, {
-        {"q_id", type text}, {"ordem", Int64.Type}, {"safra", type text},
-        {"pergunta_pt", type text}, {"pergunta_en", type text},
-        {"opcao_id", type text}, {"opcao_pt", type text},
-        {"opcao_en", type text}, {"chave", type text},
-        {"n", Int64.Type}, {"base", Int64.Type},
-        {"pct", type number}, {"pct_ant", type number},
-        {"delta", type number}, {"fonte", type text}})
-in
-    Tipado
-
-
-// ---------------------------------------------------------------------
-// [6] serie                        (janela móvel p/ gráficos de linha)
-// ---------------------------------------------------------------------
-// Alimenta a aba `Gráfico capa` e qualquer gráfico de série temporal.
-// A janela é definida em config/config.yaml (parametros.janela_serie).
+// Mesma janela da aba `tendencias`, mas em formato longo e com TODAS
+// as alternativas. Bom para montar um gráfico de linha fora da lista
+// de `series_do_report`, ou para tabela dinâmica.
 let
     Arquivo = PastaBases & "\PA Base Mes Atual.xlsx",
     Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
@@ -129,34 +171,6 @@ let
         {"pct", type number}})
 in
     Tipado
-
-
-// ---------------------------------------------------------------------
-// [7] q_mes                       (slots da pergunta do mês — FIXO)
-// ---------------------------------------------------------------------
-// ATENÇÃO: esta aba tem layout de endereço fixo. Carregue-a numa aba
-// dedicada e NÃO ordene, filtre nem insira linhas nela: os gráficos dos
-// slots apontam para endereços absolutos. Ver LEIA-ME.md.
-let
-    Arquivo = PastaBases & "\PA Base Mes Atual.xlsx",
-    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
-    Aba     = Fonte{[Item="q_mes", Kind="Sheet"]}[Data]
-in
-    Aba
-
-
-// ---------------------------------------------------------------------
-// [8] meta                                  (cabeçalho do mês)
-// ---------------------------------------------------------------------
-// onda, título em PT e EN, nº de respostas, data de geração.
-// Use nos títulos dos slides em vez de digitar o mês na mão.
-let
-    Arquivo = PastaBases & "\PA Base Mes Atual.xlsx",
-    Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
-    Aba     = Fonte{[Item="meta", Kind="Sheet"]}[Data],
-    Renom   = Table.RenameColumns(Aba, {{"Column1", "campo"}, {"Column2", "valor"}})
-in
-    Renom
 
 
 // ---------------------------------------------------------------------
@@ -175,11 +189,10 @@ in
 
 
 // ---------------------------------------------------------------------
-// [10] respostas                     (grão respondente — OPCIONAL)
+// [10] respostas                          (grão respondente, ~124 mil)
 // ---------------------------------------------------------------------
-// ~124 mil linhas, na aba `respostas` da base histórica. Só carregue se
-// for fazer recorte ad-hoc (por região, por perfil de alocação, etc).
-// Para o report não é necessário.
+// Uma linha por respondente x pergunta x alternativa marcada.
+// Para cortes por região, por perfil de alocação, cruzamentos.
 let
     Arquivo = PastaBases & "\PA Base Historica.xlsx",
     Fonte   = Excel.Workbook(File.Contents(Arquivo), null, true),
