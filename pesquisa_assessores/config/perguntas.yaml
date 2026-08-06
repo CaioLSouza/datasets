@@ -359,8 +359,14 @@ perguntas_safra:
     substitui_no_mes: true
     pt: "Qual o nível que você espera que o Ibovespa atinja ao fim de {safra}?"
     en: "What level do you expect the Ibovespa to reach by the end of {safra}?"
+    # "fim de" e "final de" convivem: até 2021 a pergunta era de texto
+    # livre ("digite abaixo qual o nível... ao FINAL de 2021") e o
+    # respondente digitava o número; depois virou faixa ("ao FIM de
+    # 2026"). Se o regex não pegar as duas grafias, a linha antiga deixa
+    # de ser reconhecida como pergunta e o parser de faixa arranca o ano
+    # dela, criando uma faixa fantasma de 2021 a 2021.
     match:
-      - "ibovespa atinja (?:ao |no )?fim de (?P<safra>\\d{4})"
+      - "ibovespa atinja (?:ao |no )?(?:fim|final) d[eo] (?P<safra>\\d{4})"
       - "ibovespa atinja nos proximos 12 meses"          # safra = 12m
       - "ibovespa atinja ao fim dos proximos 12 meses"
     safra_padrao: "12m"

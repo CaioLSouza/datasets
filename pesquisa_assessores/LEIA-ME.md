@@ -59,6 +59,12 @@ remendar:
 virava uma coluna nova para sempre. Em 3 anos foram 37 ondas e 6.735 respostas
 espalhadas numa matriz quase toda em branco.
 
+**A Base acumulou três formatos diferentes na mesma linha.** O número de
+respondentes da linha 2 é texto até 2021 (`"590 respostas"`), fica vazio em
+2022 e vira número em 2023. O código da onda na linha 1 só nasce em jul/2023.
+Em jun/2023 alguém guardou ranking em vez de percentual. Nada disso está
+documentado em lugar nenhum — se descobre lendo célula por célula.
+
 **A ligação pergunta ↔ coluna era por texto exato.** A fórmula fazia
 `MATCH(texto_da_pergunta; 'Raw Data'!$1:$1; 0)`. Qualquer letra diferente no
 Forms criava coluna nova. Aconteceu: *"os maiores risco"* virou *"o maiores
@@ -127,14 +133,42 @@ O congelamento vem de `config/valores_publicados.csv`, gerado uma vez pelo
 `src/congelar_historico.py` lendo a própria aba Base. Cada linha do `agregado`
 carrega a coluna `fonte` dizendo de onde o número veio.
 
-Conferido: **2.893 de 2.894 valores publicados saem idênticos.** O `reconciliar.py`
-mede isso a qualquer momento.
+Conferido: **3.717 de 3.718 valores publicados saem idênticos**, cobrindo as 76
+ondas. O `reconciliar.py` mede isso a qualquer momento.
 
-O único caso que sobra precisa da sua decisão: em jul/2026 a Base tem **duas
-linhas** para *"Melhora na recuperação econômica global"*, publicando 12,15% e
-21,50%. A de cima tem um `;` colado no rótulo e por isso subconta; a de baixo é
-a correção. O congelador fica com a de baixo e avisa. Se você preferir a outra,
-é só editar o valor em `config/valores_publicados.csv`.
+### A Base alcança mais longe que a Raw Data
+
+Isso é o que faz o congelamento valer a pena, e é fácil de errar:
+
+| | Cobertura | O que tem |
+|---|---|---|
+| Aba **Base** | **76 ondas** — fev/2020 a jul/2026 | os percentuais publicados |
+| Aba **Raw Data** | **37 ondas** — jul/2023 a jul/2026 | as respostas individuais |
+
+São **39 ondas — 3 anos e 5 meses — que só existem na Base.** Elas entram no
+histórico como valor publicado, sem recálculo possível, porque não há dado bruto
+por trás.
+
+Detalhe que engana: o código `202307` na linha 1 da Base só existe da 38ª coluna
+em diante — foi acrescentado quando a Raw Data começou. As 39 colunas anteriores
+se identificam pela **data na linha 4**. Ler pela linha 1 perde tudo isso
+silenciosamente.
+
+### Três coisas que o congelador recusa (e avisa)
+
+1. **A "Edição Coronavírus" (fev/2020).** Foi uma pesquisa extraordinária, dia
+   15, além da edição regular do dia 01. A chave de onda é `AAAAMM` e não
+   comporta as duas — fica a regular.
+
+2. **O ranking de setores (jun/2023).** Nesse mês a Base guardou a *ordem de
+   preferência* (1 a 14), não percentual. Não existe conversão honesta de
+   posição para %, então jun/2023 fica sem essa pergunta.
+
+3. **A linha duplicada de `apetite_risco` (jul/2026).** A Base tem duas linhas
+   para *"Melhora na recuperação econômica global"*, publicando 12,15% e 21,50%.
+   A de cima tem um `;` colado no rótulo e subconta; a de baixo é a correção. O
+   congelador fica com a de baixo. Se você preferir a outra, é editar o valor em
+   `config/valores_publicados.csv`.
 
 ### E os merges de alias, não mexem em número?
 
@@ -266,7 +300,7 @@ python src\congelar_historico.py "\\xpdocs\Research\Equities\Estrategia\Reports\
 Lê a aba Base e grava `config/valores_publicados.csv`. Confira o aviso de
 conflito que ele imprime no fim.
 
-**2. Importar as 37 ondas de respostas:**
+**2. Importar as 37 ondas de respostas cruas** (a Raw Data só vai até jul/2023 para trás)**:**
 
 ```bash
 python src\pipeline.py --bootstrap "\\xpdocs\Research\Equities\Estrategia\Reports\Pesquisa assessores\PA Principal.xlsx"

@@ -32,6 +32,8 @@
 
    python pipeline.py --bootstrap "PA Principal.xlsx"
        carga inicial: importa as 37 ondas da aba Raw Data existente
+       (as 39 ondas anteriores, que so existem na aba Base, entram
+        pelo congelamento -- ver congelar_historico.py)
 
  Codigo de saida: 0 = ok, 1 = erro (alternativa nova nao declarada,
  pergunta nao reconhecida, etc). Use no agendador para ser avisado.
@@ -94,6 +96,11 @@ def _num(txt: str) -> float:
     return float(t)
 
 
+_FAIXA_INICIO = re.compile(
+    r"^([<>=≤≥]|entre|acima|abaixo|ate|mais de|menos de|superior|inferior|"
+    r"menor|de \d|\d)")
+
+
 def parse_faixa(rotulo: str):
     """'Entre 190 e 200 mil pontos' -> (190000.0, 200000.0)
 
@@ -103,8 +110,16 @@ def parse_faixa(rotulo: str):
     E este parser que faz a re-grade de faixas passar sem quebrar nada:
     quando as faixas do Ibovespa de 10 mil pontos viraram faixas de 20
     mil em abr/2026, nenhuma linha de configuracao precisou mudar.
+
+    Devolve None para texto que nao TEM cara de faixa. Sem essa guarda,
+    a frase inteira de uma pergunta ("Por favor, digite abaixo qual o
+    nivel ... ao final de 2021.") viraria a faixa 2021-2021, e o valor
+    da linha -- que e a media digitada, 141.964 pontos -- entraria no
+    historico como se fosse um percentual.
     """
     t = norm(rotulo)
+    if len(t) > 60 or not _FAIXA_INICIO.match(t):
+        return None
     nums = [_num(m.group()) for m in _NUM.finditer(t)]
     if not nums:
         return None
@@ -496,23 +511,34 @@ def mesclar(store, novos, onda):
 # =====================================================================
 
 def carregar_congelados(caminho: Path):
-    """Valores COMO FORAM PUBLICADOS -> {(onda, chave): pct}.
+    """Valores COMO FORAM PUBLICADOS, gerados por congelar_historico.py.
 
-    Gerado uma vez por congelar_historico.py a partir da aba Base.
+    -> (valores, metas)
+       valores  {(onda, chave): pct}
+       metas    {chave: {q_id, familia, safra, opcao_id, opcao_pt, ...}}
+
+    A metadata viaja junto porque a Base cobre 76 ondas (fev/2020 em
+    diante) e a Raw Data so 37 (jul/2023 em diante). Alternativa que so
+    existiu nesse intervalo -- as safras velhas do Ibovespa, por exemplo
+    -- nao aparece em onda nenhuma com dado bruto, entao nao teria de
+    quem herdar o rotulo.
     """
     if not caminho.exists():
-        return {}
-    out = {}
+        return {}, {}
+    valores, metas = {}, {}
     with open(caminho, encoding="utf-8-sig", newline="") as fh:
         for r in csv.DictReader(fh, delimiter=";"):
             try:
-                out[(int(r["onda"]), r["chave"])] = float(r["pct"])
+                valores[(int(r["onda"]), r["chave"])] = float(r["pct"])
             except (ValueError, KeyError):
                 continue
-    return out
+            if r["chave"] not in metas and r.get("q_id"):
+                metas[r["chave"]] = r
+    return valores, metas
 
 
-def agregar(regs, denominador="respondentes", congelados=None, ate_onda=None):
+def agregar(regs, denominador="respondentes", congelados=None, ate_onda=None,
+            metas=None, registro=None):
     """-> lista de dicts (onda, q_id, opcao_id, n, base, pct)
 
     Numero publicado nao muda: para as ondas ate `ate_onda`, o `pct` que
@@ -567,9 +593,16 @@ def agregar(regs, denominador="respondentes", congelados=None, ate_onda=None):
             "fonte": "publicado" if usa_congelado else "calculado",
         })
 
-    # Alternativa que foi publicada mas nao reaparece no recalculo (ex.:
-    # rotulo que so existia numa onda antiga) entra assim mesmo, senao a
-    # serie historica perderia um ponto que ja foi ao ar.
+    # Valor publicado que o recalculo nao reproduz entra assim mesmo,
+    # senao a serie historica perderia um ponto que ja foi ao ar. Sao
+    # dois casos, e a maioria e o segundo:
+    #
+    #   a) a alternativa existe em outra onda com dado bruto
+    #      -> herda dali os rotulos
+    #   b) a alternativa so existiu antes de jul/2023, onde nao ha Raw
+    #      Data nenhuma (39 das 76 ondas)
+    #      -> os rotulos vem do proprio congelamento
+    metas = metas or {}
     if ate_onda is not None:
         rot = {}
         for a in saida:
@@ -578,11 +611,32 @@ def agregar(regs, denominador="respondentes", congelados=None, ate_onda=None):
             if o > ate_onda or (o, chave) in chaves_calc:
                 continue
             m = rot.get(chave)
-            if not m:
+            if m:
+                saida.append({**m, "onda": o, "n": None, "base": None,
+                              "pct": v, "pct_calculado": None,
+                              "fonte": "publicado"})
                 continue
-            saida.append({**m, "onda": o, "n": None, "base": None,
-                          "pct": v, "pct_calculado": None,
-                          "fonte": "publicado"})
+            md = metas.get(chave)
+            if not md:
+                continue
+            p = registro.por_id.get(md["q_id"]) if registro else None
+            saida.append({
+                "onda": o,
+                "q_id": md["q_id"],
+                "familia": md.get("familia", "recorrente"),
+                "safra": md.get("safra", ""),
+                "pergunta_pt": p.pt if p else md["q_id"],
+                "pergunta_en": p.en if p else md["q_id"],
+                "opcao_id": md["opcao_id"],
+                "opcao_pt": md["opcao_pt"],
+                "opcao_en": md.get("opcao_en") or md["opcao_pt"],
+                "ordem_pergunta": p.ordem if p else 999,
+                "ordem_opcao": int(md.get("ordem_opcao") or 500),
+                "chave": chave,
+                "n": None, "base": None,
+                "pct": v, "pct_calculado": None,
+                "fonte": "publicado",
+            })
     saida.sort(key=lambda x: (x["onda"], x["ordem_pergunta"], x["q_id"],
                               x["ordem_opcao"], -x["pct"]))
     return saida
@@ -1158,7 +1212,8 @@ def main():
         return True
 
     # Numero publicado nao muda: ondas ate aqui saem congeladas.
-    congelados = carregar_congelados(RAIZ / "config" / "valores_publicados.csv")
+    congelados, metas = carregar_congelados(
+        RAIZ / "config" / "valores_publicados.csv")
     corte = par.get("ultima_onda_publicada")
     if congelados and corte:
         print(f"Histórico congelado até {corte} "
@@ -1179,7 +1234,8 @@ def main():
             print(f"\n{len(erros)} alternativas não declaradas (as maiores):")
             for e in erros[:25]:
                 print("  " + e)
-        agg = agregar(regs, par["denominador"], congelados, corte)
+        agg = agregar(regs, par["denominador"], congelados, corte,
+                      metas, registro)
         ultima = max(int(r["onda"]) for r in regs)
         if barrar_paineis(agg, ultima):
             return 1
@@ -1213,7 +1269,8 @@ def main():
 
     store = carregar_store(store_path)
     completo = mesclar(store, regs, onda)
-    agg = agregar(completo, par["denominador"], congelados, corte)
+    agg = agregar(completo, par["denominador"], congelados, corte,
+                  metas, registro)
     med = medias(completo)
 
     txt, log_path = escrever_log(cfg, onda, diag, n_total, resp, agg, entrada.name)

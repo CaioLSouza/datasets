@@ -33,8 +33,12 @@ Etapa 3 abaixo mostra um atalho que costuma resolver os 11 de uma vez.
 Se ainda não fez, rode os três comandos da seção "Instalação" do
 `LEIA-ME.md`: congelar → bootstrap → reconciliar.
 
-O `reconciliar.py` tem que fechar o bloco 1 em 100%. Isso é o que
-garante que nenhum número já publicado mudou de valor na virada.
+O `reconciliar.py` tem que fechar o bloco 1 em ~100% (hoje: **3.717 de
+3.718**). Isso é o que garante que nenhum número já publicado mudou de
+valor na virada.
+
+O histórico cobre **76 ondas, de fev/2020 a jul/2026** — a aba Base
+alcança bem mais para trás que a Raw Data, que só começa em jul/2023.
 
 Ao fim você tem, em `\\xpdocs\...\Pesquisa assessores\bases\`:
 

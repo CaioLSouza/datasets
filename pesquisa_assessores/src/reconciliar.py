@@ -19,12 +19,15 @@
  USO
    python reconciliar.py "\\\\xpdocs\\...\\PA Principal.xlsx"
 
- Compara so as ondas a partir de 202307, que e de onde existe Raw Data.
- As ondas anteriores estao na Base apenas como valores fixos, sem dado
- bruto por tras, e por isso nao sao reconciliaveis.
+ O bloco 1 cobre as 76 ondas (fev/2020 em diante): mesmo sem dado bruto
+ por tras, o valor congelado tem que reproduzir o publicado.
+
+ O bloco 2 so cobre de jul/2023 em diante, que e de onde existe Raw
+ Data. Antes disso nao ha o que recalcular.
 =======================================================================
 """
 
+import datetime
 import sys
 from collections import Counter
 from pathlib import Path
@@ -52,7 +55,8 @@ def main():
     if not regs:
         sys.exit("Store vazio. Rode o pipeline (ou --bootstrap) antes.")
 
-    congelados = carregar_congelados(RAIZ / "config" / "valores_publicados.csv")
+    congelados, metas = carregar_congelados(
+        RAIZ / "config" / "valores_publicados.csv")
     corte = cfg["parametros"].get("ultima_onda_publicada")
 
     # DUAS visoes, que respondem duas perguntas diferentes:
@@ -61,7 +65,7 @@ def main():
     #           Tem que bater 100% com o publicado. Se nao bater, e bug.
     #  calc   = o que o recalculo do bruto diria. Serve so para auditoria:
     #           e onde aparecem os erros do processo antigo.
-    agg = agregar(regs, "onda", congelados, corte)
+    agg = agregar(regs, "onda", congelados, corte, metas, reg)
     saida = {(a["onda"], a["q_id"], a["opcao_id"]): a["pct"] for a in agg}
     pct = {(a["onda"], a["q_id"], a["opcao_id"]): a["pct_calculado"]
            for a in agg if a.get("pct_calculado") is not None}
@@ -69,9 +73,21 @@ def main():
 
     wb = openpyxl.load_workbook(pa, data_only=True)
     ws = wb["Base"]
-    cols = {c: int(ws.cell(1, c).value) for c in range(4, 120)
-            if isinstance(ws.cell(1, c).value, (int, float))
-            and 202000 < ws.cell(1, c).value < 210000}
+
+    # A data da linha 4 e a chave da coluna, nao o codigo da linha 1 --
+    # esse so existe de jul/2023 em diante. Mesma regra do congelador.
+    cols, vistas = {}, {}
+    for c in range(4, 130):
+        v4, v1 = ws.cell(4, c).value, ws.cell(1, c).value
+        if isinstance(v4, datetime.datetime):
+            onda, dia = v4.year * 100 + v4.month, v4.day
+        elif isinstance(v1, (int, float)) and 201500 < v1 < 210000:
+            onda, dia = int(v1), 1
+        else:
+            continue
+        if onda not in vistas or dia < vistas[onda][1]:
+            vistas[onda] = (c, dia)
+    cols = {c: o for o, (c, _) in vistas.items()}
 
     atual, comp_idx, sem_match = None, {}, set()
     for r in range(1, ws.max_row + 1):
@@ -93,7 +109,7 @@ def main():
         oid = res[0][0]
         for col, onda in cols.items():
             v = ws.cell(r, col).value
-            if isinstance(v, (int, float)) and onda >= 202307:
+            if isinstance(v, (int, float)):
                 # Duas linhas da Base podem cair na mesma chave: o rotulo
                 # antigo e o novo de uma alternativa renomeada. Em cada
                 # onda so uma tem valor; a outra fica zerada. Fico com a
@@ -129,9 +145,12 @@ def main():
             furos.append((abs(bv - sv), onda, q, rot, bv, sv))
 
     tot1 = max(bate + fura, 1)
-    print(f"Ondas comparadas: {len([o for o in cols.values() if o >= 202307])}")
-    print(f"Pares comparados: {len(comp)}")
-    print(f"Congelado ate: {corte}\n")
+    ondas_all = sorted(cols.values())
+    print(f"Ondas na Base ..... {len(ondas_all)}  "
+          f"({ondas_all[0]}..{ondas_all[-1]})")
+    print(f"  com Raw Data .... {len([o for o in ondas_all if o >= 202307])}")
+    print(f"Pares comparados .. {len(comp)}")
+    print(f"Congelado ate ..... {corte}\n")
     print("=" * 66)
     print(" 1) SAIDA DO PIPELINE  x  PUBLICADO   (tem que dar 100%)")
     print("=" * 66)
@@ -152,6 +171,8 @@ def main():
     ok = merge = ruim = falta = 0
     piores, porq = [], Counter()
     for onda, q, oid, bv, rot in comp:
+        if onda < 202307:          # sem Raw Data, nao ha o que recalcular
+            continue
         pv, cv = pct.get((onda, q, oid)), cnt.get((onda, q, oid))
         if pv is None:
             if bv > 0.0005:
