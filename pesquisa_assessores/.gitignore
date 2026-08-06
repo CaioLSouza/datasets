@@ -36,6 +36,10 @@ PA Principal.xlsx
 # Se o repositório for público, pense duas vezes assim mesmo.
 # ---------------------------------------------------------------------
 
+# Cópias .txt dos .bat, feitas só para passar pelo bloqueio de anexo
+# do Gmail. São descartáveis — o original versionado é o .bat.
+*.bat.txt
+
 __pycache__/
 *.pyc
 ~$*
