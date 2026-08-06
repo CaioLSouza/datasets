@@ -74,7 +74,27 @@ def em_notebook():
                for a in sys.argv)
 
 
+def caminho_do_config():
+    """O `pa_principal` declarado em config/config.yaml, se houver."""
+    try:
+        import yaml
+        with open(RAIZ / "config" / "config.yaml", encoding="utf-8") as fh:
+            return (yaml.safe_load(fh).get("caminhos") or {}).get("pa_principal")
+    except Exception:
+        return None
+
+
 def _resolver_caminho(caminho, exemplo):
+    if caminho is None and not em_notebook() and len(sys.argv) > 1:
+        caminho = sys.argv[1]
+
+    # Sem argumento, cai no que o config.yaml declara. E o que deixa o
+    # .bat ser um duplo clique, sem ninguem digitar caminho de rede.
+    if caminho is None:
+        caminho = caminho_do_config()
+        if caminho:
+            print(f"(usando o pa_principal do config.yaml)\n   {caminho}\n")
+
     if caminho is None:
         if em_notebook():
             sys.exit(
@@ -85,9 +105,8 @@ def _resolver_caminho(caminho, exemplo):
                 "Repare no r antes das aspas — sem ele o Python interpreta as\n"
                 "barras invertidas como código de escape."
             )
-        if len(sys.argv) < 2:
-            sys.exit(__doc__)
-        caminho = sys.argv[1]
+        sys.exit(__doc__)
+
     pa = Path(caminho)
     if pa.suffix.lower() not in (".xlsx", ".xlsm"):
         sys.exit(f"Esperava um .xlsx e recebi:\n   {pa}")

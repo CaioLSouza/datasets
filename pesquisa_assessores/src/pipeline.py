@@ -1196,7 +1196,11 @@ def main(argv=None):
     ap.add_argument("--arquivo", help="export do Forms (.xlsx)")
     ap.add_argument("--onda", type=int, help="AAAAMM (se não vier, é deduzido)")
     ap.add_argument("--conferir", action="store_true", help="só valida, não escreve")
-    ap.add_argument("--bootstrap", help="carga inicial a partir de PA Principal.xlsx")
+    # nargs="?" para que "--bootstrap" sozinho use o pa_principal do
+    # config.yaml. E o que permite o montar.bat ser um duplo clique.
+    ap.add_argument("--bootstrap", nargs="?", const="__config__",
+                    help="carga inicial a partir de PA Principal.xlsx "
+                         "(sem valor, usa o pa_principal do config.yaml)")
     ap.add_argument("--config", default=str(RAIZ / "config" / "config.yaml"))
     args = ap.parse_args(argv)
 
@@ -1242,8 +1246,20 @@ def main(argv=None):
 
     # ---------------- bootstrap ----------------
     if args.bootstrap:
-        print(f"Carga inicial a partir de {args.bootstrap}\n")
-        regs, diags = bootstrap(Path(args.bootstrap), registro, cfg)
+        origem = args.bootstrap
+        if origem == "__config__":
+            origem = cam.get("pa_principal")
+            if not origem:
+                print("--bootstrap sem valor exige `pa_principal` no config.yaml.")
+                return 1
+            print("(usando o pa_principal do config.yaml)")
+        if not Path(origem).exists():
+            print(f"Não achei a planilha:\n   {origem}\n\n"
+                  "Confira se a rede está acessível.")
+            return 1
+        args.bootstrap = origem
+        print(f"Carga inicial a partir de {origem}\n")
+        regs, diags = bootstrap(Path(origem), registro, cfg)
         erros = [e for d, _, _ in diags.values() for e in d.erros]
         print(f"\n{len(regs)} registros, {len(diags)} ondas.")
         if erros:

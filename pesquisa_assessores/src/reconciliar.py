@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import openpyxl
 import yaml
 
-from congelar_historico import _resolver_caminho
+from congelar_historico import _resolver_caminho  # cai no config.yaml sozinho
 from pipeline import (RAIZ, Registro, agregar, carregar_congelados,
                       carregar_store, norm)
 

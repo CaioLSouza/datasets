@@ -1,0 +1,28 @@
+# =====================================================================
+#  .bat PRECISA DE CRLF
+# =====================================================================
+#  O cmd.exe não lê arquivo de lote com quebra de linha LF: ele avança
+#  por contagem de bytes e retoma no meio da linha, comendo os
+#  primeiros caracteres. O sintoma é confuso — erros do tipo
+#  "'tlocal' não é reconhecido como um comando", que é `setlocal` sem
+#  as duas primeiras letras.
+#
+#  Pior: o comando mutilado FALHA em silêncio e o script continua. No
+#  montar.bat isso desligava o `setlocal enabledelayedexpansion`, e com
+#  ele a trava que impede recongelar o histórico por engano.
+#
+#  Estas regras garantem CRLF no checkout, em qualquer máquina.
+# =====================================================================
+
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# O resto fica com LF, que é o que Python e YAML esperam.
+*.py   text eol=lf
+*.yaml text eol=lf
+*.md   text eol=lf
+*.m    text eol=lf
+
+# Wheels são binários — o git não pode tocar.
+*.whl  binary
+*.xlsx binary
