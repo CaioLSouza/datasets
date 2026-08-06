@@ -1,6 +1,19 @@
 @echo off
 chcp 65001 >nul
-cd /d "%~dp0"
+
+REM  pushd, e nao "cd /d": o cmd.exe nao aceita caminho UNC como
+REM  diretorio atual. Como esta pasta fica em \\xpdocs\..., um "cd /d"
+REM  cairia em C:\Windows sem avisar e todos os caminhos relativos
+REM  (src\, config\, _dados\) quebrariam. O pushd mapeia uma letra de
+REM  unidade temporaria para o compartilhamento e entra nela.
+pushd "%~dp0"
+if errorlevel 1 (
+    echo  Nao consegui acessar a pasta do script:
+    echo    %~dp0
+    echo  Confira se a rede esta acessivel.
+    pause
+    exit /b 1
+)
 
 echo.
 echo  ===============================================
@@ -25,5 +38,6 @@ if %CODIGO% NEQ 0 (
     echo    3^) abra os dois PPTs e Atualizar Links
 )
 echo.
+popd
 pause
 exit /b %CODIGO%
