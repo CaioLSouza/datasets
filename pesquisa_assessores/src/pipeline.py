@@ -1175,14 +1175,30 @@ def achar_entrada(pasta: Path):
     return max(cand, key=lambda p: p.stat().st_mtime) if cand else None
 
 
-def main():
+def main(argv=None):
+    """argv: num notebook, passe a lista de argumentos explicitamente.
+
+    Ex.:  main(["--bootstrap", r"\\\\xpdocs\\...\\PA Principal.xlsx"])
+          main([])                      # rodada normal do mes
+
+    Sem isso, o argparse leria o sys.argv do kernel do Jupyter
+    (-f kernel-....json) e reclamaria de argumento desconhecido.
+    """
+    if argv is None and any("ipykernel" in str(a) or str(a).endswith(".json")
+                            for a in sys.argv):
+        sys.exit(
+            "Rodando num notebook: o sys.argv aqui traz os argumentos do\n"
+            "kernel do Jupyter, não os seus. Chame passando a lista:\n\n"
+            '    main([])                                  # rodada do mês\n'
+            '    main(["--bootstrap", r"\\\\xpdocs\\...\\PA Principal.xlsx"])\n'
+        )
     ap = argparse.ArgumentParser(description="Pipeline da Pesquisa de Assessores XP")
     ap.add_argument("--arquivo", help="export do Forms (.xlsx)")
     ap.add_argument("--onda", type=int, help="AAAAMM (se não vier, é deduzido)")
     ap.add_argument("--conferir", action="store_true", help="só valida, não escreve")
     ap.add_argument("--bootstrap", help="carga inicial a partir de PA Principal.xlsx")
     ap.add_argument("--config", default=str(RAIZ / "config" / "config.yaml"))
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     with open(args.config, encoding="utf-8") as fh:
         cfg = yaml.safe_load(fh)

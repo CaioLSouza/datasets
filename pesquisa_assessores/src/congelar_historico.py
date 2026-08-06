@@ -66,10 +66,43 @@ def _n_respostas(v):
     return None
 
 
-def main():
-    if len(sys.argv) < 2:
-        sys.exit(__doc__)
-    pa = Path(sys.argv[1])
+def em_notebook():
+    """Num notebook o sys.argv traz os argumentos do kernel do Jupyter
+    (-f kernel-....json), nao o que voce digitou. Detectar isso evita um
+    erro obscuro la na frente, quando o openpyxl tentar abrir o .json."""
+    return any("ipykernel" in str(a) or str(a).endswith(".json")
+               for a in sys.argv)
+
+
+def _resolver_caminho(caminho, exemplo):
+    if caminho is None:
+        if em_notebook():
+            sys.exit(
+                "Rodando num notebook: o sys.argv aqui traz os argumentos do\n"
+                "kernel do Jupyter, não o caminho que você quer.\n\n"
+                "Passe o caminho direto na chamada:\n\n"
+                f"    {exemplo}\n\n"
+                "Repare no r antes das aspas — sem ele o Python interpreta as\n"
+                "barras invertidas como código de escape."
+            )
+        if len(sys.argv) < 2:
+            sys.exit(__doc__)
+        caminho = sys.argv[1]
+    pa = Path(caminho)
+    if pa.suffix.lower() not in (".xlsx", ".xlsm"):
+        sys.exit(f"Esperava um .xlsx e recebi:\n   {pa}")
+    if not pa.exists():
+        sys.exit(f"Não achei o arquivo:\n   {pa}\n\n"
+                 "Confira se a rede está acessível.")
+    return pa
+
+
+def main(caminho=None):
+    """caminho: passe explicitamente se estiver num notebook."""
+    pa = _resolver_caminho(
+        caminho,
+        'main(r"\\\\xpdocs\\Research\\Equities\\Estrategia\\Reports'
+        '\\Pesquisa assessores\\PA Principal.xlsx")')
     reg = Registro(RAIZ / "config" / "perguntas.yaml")
 
     wb = openpyxl.load_workbook(pa, data_only=True)

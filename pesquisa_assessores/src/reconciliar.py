@@ -37,16 +37,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import openpyxl
 import yaml
 
+from congelar_historico import _resolver_caminho
 from pipeline import (RAIZ, Registro, agregar, carregar_congelados,
                       carregar_store, norm)
 
 IGNORAR = {"total", "media", "média", "resposta media", "resposta média", ""}
 
 
-def main():
-    if len(sys.argv) < 2:
-        sys.exit(__doc__)
-    pa = Path(sys.argv[1])
+def main(caminho=None):
+    """caminho: passe explicitamente se estiver num notebook."""
+    pa = _resolver_caminho(
+        caminho,
+        'main(r"\\\\xpdocs\\Research\\Equities\\Estrategia\\Reports'
+        '\\Pesquisa assessores\\PA Principal.xlsx")')
 
     with open(RAIZ / "config" / "config.yaml", encoding="utf-8") as fh:
         cfg = yaml.safe_load(fh)
