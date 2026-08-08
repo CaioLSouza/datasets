@@ -51,6 +51,16 @@ ULTIMA_ONDA_PUBLICADA = 202607
 # Quantas ondas as tabelas de série temporal carregam.
 ONDAS_NA_SERIE = 36
 
+# Quantas perguntas do mês a planilha comporta. Cada uma ganha a sua própria
+# tabela (q_mes_1, q_mes_2, ...), sempre emitida -- vazia quando não há
+# pergunta para o slot. Slot fixo é o que permite montar o gráfico uma vez e
+# não refazer: num mês com uma pergunta só, os outros ficam em branco.
+#
+# Medido no histórico: 11 ondas tiveram 1 pergunta extra, 10 tiveram 2,
+# 6 tiveram 3 e 2 tiveram 5. Se passar de SLOTS_Q_MES, o pipeline avisa quais
+# ficaram de fora -- não trunca calado.
+SLOTS_Q_MES = 5
+
 # Janela usada nas perguntas de enumeração fixa (ordenar='natural') para
 # decidir se uma alternativa ainda existe. Sem resposta nenhuma nas últimas
 # ONDAS_VIVAS ondas, ela sai dos gráficos. Larga de propósito: aqui o risco é

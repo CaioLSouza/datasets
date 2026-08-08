@@ -8,15 +8,16 @@
 3. Abrir PA Charts.xlsx  ──►  Dados > Atualizar Tudo
 ```
 
-Os gráficos das perguntas recorrentes se atualizam sozinhos. **A exceção é a
-pergunta do mês**: ela muda de forma a cada edição, então é o único gráfico que
-você remonta — os números já vêm apurados na aba `q_mes`.
+Os gráficos das perguntas recorrentes se atualizam sozinhos. **A exceção são as
+perguntas do mês**: elas mudam de forma a cada edição, então são os únicos
+gráficos que você remonta — os números já vêm apurados nas abas `q_mes_1` a
+`q_mes_5`.
 
 Duas coisas seguem manuais, e por motivo:
 
 | Manual | Por quê |
 |---|---|
-| Tradução da pergunta do mês para inglês | Ninguém traduz melhor que você. Coluna `rotulo_en` da aba `q_mes`. |
+| Tradução das perguntas do mês para inglês | Ninguém traduz melhor que você. Coluna `rotulo_en` das abas `q_mes_N`. |
 | Fechamento do Ibovespa da capa | Não sai da pesquisa. Uma linha por mês em `ibovespa.csv`; o log avisa qual falta. |
 
 ---
@@ -66,7 +67,8 @@ Tabela na planilha do mesmo nome.
 | `capa` | onda | as três séries de intenção + `ibovespa` |
 | `meta` | onda | `data`, `respondentes`, `regime` |
 | `corrente` | — | uma linha só: a onda do report, `mes_pt`, `mes_en` |
-| `q_mes` | alternativa | a pergunta do mês |
+| `q_mes_1` … `q_mes_5` | alternativa | as perguntas do mês, **uma tabela cada** |
+| `q_mes` | alternativa | a união das anteriores, com a coluna `slot`. Para auditoria |
 
 As 11 perguntas recorrentes: `regiao`, `alocacao_rv`, `proximos_meses`,
 `classes_ativos`, `pct_internacional`, `interesse_internacional`,
@@ -84,6 +86,23 @@ para a célula correspondente em `d_<pergunta>[rotulo_en]`.
 
 **`atual` e `anterior` já vêm lado a lado**, com o `delta`. A comparação com o
 mês passado não precisa de fórmula.
+
+### As perguntas do mês têm slot próprio
+
+Cada pergunta do mês vira **uma tabela**: `q_mes_1`, `q_mes_2`, … até
+`q_mes_5`. Os cinco slots são sempre gerados, vazios quando não há pergunta
+para eles — assim você monta o gráfico uma vez e, num mês com menos perguntas,
+o slot sobrando simplesmente fica em branco.
+
+Não é uma tabela só de propósito. Ter mais de uma pergunta do mês é a norma, não
+exceção: medido no histórico, **11 ondas tiveram 1, 10 tiveram 2, 6 tiveram 3 e
+2 tiveram 5**. Numa tabela única as alternativas de perguntas diferentes se
+misturariam na ordenação, e o "Outra" somaria o texto livre de todas num só —
+o que é errado, porque são perguntas distintas. Cada slot tem o seu "Outra".
+
+Se um mês passar de cinco perguntas, o pipeline **diz quais ficaram de fora**.
+Aí é aumentar `SLOTS_Q_MES` no `comum.py` e montar a `PA Charts.xlsx` do zero
+para criar as consultas dos slots novos.
 
 ### Ao montar o gráfico, use a coluna da Tabela
 
@@ -196,7 +215,8 @@ Você mexe em **um arquivo**: `registro.csv`. Uma linha por alternativa.
 | Alternativa é o mesmo conceito de outra, com outro nome | Ponha o mesmo `serie_id` nas duas. |
 | Mudou o texto da **pergunta** | Acrescente um padrão em `match` no `comum.py`. Não apague os antigos. |
 | Ibovespa rolou de 2026 para 2027 | Atualize os 6 `rotulo_pt` de `ibovespa_alvo` e os `valor_num`. |
-| Entrou pergunta do mês | Nada. Cai na aba `q_mes`. |
+| Entrou pergunta do mês | Nada. Cai no primeiro `q_mes_N` livre. |
+| Entraram **várias** perguntas do mês | Nada, até cinco. Cada uma ganha a sua tabela. |
 | Entrou pergunta recorrente nova | Um bloco em `BLOCOS` (`comum.py`) e as linhas dela no `registro.csv`. As tabelas `d_` e `s_` aparecem sozinhas; aí você monta o gráfico. |
 
 **Não existe mais regra de "não insira no meio".** As tabelas são geradas
