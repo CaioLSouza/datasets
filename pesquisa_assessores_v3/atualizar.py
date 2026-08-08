@@ -109,27 +109,47 @@ def ler_raw_data(caminho: Path, log) -> list[dict]:
 # --------------------------------------------------------------------------
 # apuração
 # --------------------------------------------------------------------------
+def quantas_respostas(coluna, respostas) -> int:
+    return sum(1 for r in respostas
+               if r.get(coluna) is not None and str(r.get(coluna)).strip())
+
+
 def casar_colunas(cabecalho, respostas, log) -> tuple[dict, list[str]]:
     """{pergunta_id: coluna} + colunas que sobraram (a pergunta do mês).
 
-    Uma coluna sobrando só conta se alguém a respondeu -- a Raw Data antiga
-    carrega 74 colunas, quase todas vazias em cada onda.
+    Quando MAIS DE UMA coluna casa com a mesma pergunta, fica a que tem
+    resposta nesta onda. Isso não é refinamento: a Raw Data antiga tem cinco
+    colunas de Ibovespa, uma por safra ("ao fim de 2023", "de 2024", "nos
+    próximos 12 meses", "de 2025", "de 2026"), e pegar a primeira significava
+    ler a coluna de 2023 -- vazia em quase toda onda. A pergunta ficava sem
+    dado, em silêncio.
+
+    Uma coluna sobrando só conta como pergunta do mês se alguém a respondeu --
+    a Raw Data carrega 74 colunas, quase todas vazias em cada onda.
     """
     achados, usadas = {}, set()
     for bloco in BLOCOS:
-        for col in cabecalho:
-            n = normalizar(col)
-            if not n or col in usadas:
-                continue
-            if any(p in n for p in bloco['match']):
-                achados[bloco['id']] = col
-                usadas.add(col)
-                break
+        candidatas = [c for c in cabecalho
+                      if c and c not in usadas
+                      and any(p in normalizar(c) for p in bloco['match'])]
+        if not candidatas:
+            continue
+        # a mais preenchida nesta onda; empate resolve pela ordem do arquivo
+        melhor = max(candidatas, key=lambda c: quantas_respostas(c, respostas))
+        if len(candidatas) > 1:
+            n = quantas_respostas(melhor, respostas)
+            outras = sum(1 for c in candidatas if quantas_respostas(c, respostas))
+            # mostra o FIM do enunciado: é lá que fica o que distingue as
+            # colunas de safra ("...ao fim de 2025?" vs "...de 2026?")
+            fim = melhor if len(melhor) <= 46 else '...' + melhor[-43:]
+            log(f'      {bloco["id"]}: {len(candidatas)} colunas casam '
+                f'({outras} com resposta) -- fiquei com {fim!r} ({n} respostas)')
+        achados[bloco['id']] = melhor
+        usadas.add(melhor)
     meta = {normalizar(m) for m in META_COLS}
     sobras = [c for c in cabecalho
               if c and c not in usadas and normalizar(c) not in meta
-              and any(r.get(c) is not None and str(r.get(c)).strip()
-                      for r in respostas)]
+              and quantas_respostas(c, respostas)]
     return achados, sobras
 
 
