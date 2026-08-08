@@ -227,6 +227,20 @@ def ordem_natural(registros: list[dict]) -> dict[str, float]:
     return {r['alternativa_id']: float(r['ordem']) for r in registros}
 
 
+
+def ondas_na_janela(ondas: list[int], corrente: int, meses: int) -> list[int]:
+    """As ondas dos últimos `meses` meses contados a partir de `corrente`.
+
+    Por mês, não por contagem de ondas: o histórico tem dois meses sem
+    pesquisa (dez/2020 e dez/2021), então "as últimas 18 ondas" e "os últimos
+    18 meses" divergem. O report fala em meses, e assim a janela não estica
+    para trás quando falta uma edição.
+    """
+    ano, mes = corrente // 100, corrente % 100
+    total = ano * 12 + (mes - 1) - (meses - 1)
+    primeira = (total // 12) * 100 + (total % 12) + 1
+    return [o for o in ondas if primeira <= o <= corrente]
+
 # --------------------------------------------------------------------------
 # registro.csv
 # --------------------------------------------------------------------------

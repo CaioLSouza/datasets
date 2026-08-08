@@ -53,7 +53,7 @@ from comum import (BLOCO_POR_ID, BLOCOS, CAMINHOS, LIMITE_CATCHALL, LIXO,
                    ULTIMA_ONDA_PUBLICADA, Log,
                    catchall_por_bloco, data_da_onda, indice_de_rotulos,
                    ler_registro, normalizar, onda_anterior, onda_de,
-                   ordem_natural, slug,
+                   ondas_na_janela, ordem_natural, slug,
                    tokens)
 
 META_COLS = ('Id', 'Hora de início', 'Hora de conclusão', 'Email', 'Nome',
@@ -637,7 +637,12 @@ def main() -> int:
 
         # ---- s_<pergunta>: série temporal, uma coluna por SÉRIE (não por
         # alternativa), para a renomeação não partir a linha do gráfico em duas
-        janela = ondas[-bloco.get('ondas_serie', ONDAS_NA_SERIE):]
+        # Janela por MÊS, não por contagem de ondas. O histórico tem dois
+        # meses sem pesquisa (dez/2020 e dez/2021), então "as últimas 18
+        # ondas" e "os últimos 18 meses" não são a mesma coisa. O report
+        # fala em meses.
+        janela = ondas_na_janela(ondas, corrente,
+                                 bloco.get('ondas_serie', ONDAS_NA_SERIE))
         def valor_serie(o, sid):
             for r in por_serie[sid]:
                 v = valor_de.get((o, pid, r['alternativa_id']))
