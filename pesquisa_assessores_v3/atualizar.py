@@ -570,6 +570,13 @@ def main() -> int:
         #   0% não interessa. Então entram só as que a onda corrente usou de
         #   fato. É isto que tira as sete alternativas que a planilha antiga
         #   manteve zeradas desde o cutover de abr/2026.
+        # alternativa marcada no_grafico=0 fica fora das tabelas de gráfico,
+        # mas continua apurada e presente na base geral
+        fora = {r['alternativa_id'] for r in regs if not r['no_grafico']}
+        if fora:
+            log(f'  {pid}: fora do gráfico por config: '
+                + ', '.join(sorted(fora)))
+        regs = [r for r in regs if r['no_grafico']]
         do_bruto = {aid for (o, p, aid) in calc if o == corrente and p == pid}
         if bloco['ordenar'] == 'valor':
             vivas = do_bruto or {
@@ -630,7 +637,7 @@ def main() -> int:
 
         # ---- s_<pergunta>: série temporal, uma coluna por SÉRIE (não por
         # alternativa), para a renomeação não partir a linha do gráfico em duas
-        janela = ondas[-ONDAS_NA_SERIE:]
+        janela = ondas[-bloco.get('ondas_serie', ONDAS_NA_SERIE):]
         def valor_serie(o, sid):
             for r in por_serie[sid]:
                 v = valor_de.get((o, pid, r['alternativa_id']))

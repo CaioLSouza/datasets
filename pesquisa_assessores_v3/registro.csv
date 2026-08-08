@@ -1,93 +1,94 @@
-﻿pergunta_id,alternativa_id,serie_id,ordem,rotulo_pt,rotulo_en,aliases,valor_num,ativa
-regiao,centro_oeste,centro_oeste,1,Centro Oeste,Midwest,,,1
-regiao,nordeste,nordeste,2,Nordeste,Northeast,,,1
-regiao,norte,norte,3,Norte,North,,,1
-regiao,sudeste,sudeste,4,Sudeste,Southeast,,,1
-regiao,sul,sul,5,Sul,South,,,1
-alocacao_rv,0_a_25,0_a_25,1,0% a 25%,0% to 25%,,,1
-alocacao_rv,25_a_50,25_a_50,2,25% a 50%,25% to 50%,,,1
-alocacao_rv,0_a_10,0_a_10,3,0% a 10%,0% to 10%,,,1
-alocacao_rv,10_a_25,10_a_25,4,10% a 25%,10% to 25%,,,1
-alocacao_rv,50_a_75,50_a_75,5,50% a 75%,50% to 75%,,,1
-alocacao_rv,75_a_100,75_a_100,6,75% a 100%,75% to 100%,,,1
-proximos_meses,nao_pretendem_alterar_seus_investimentos_em_renda_va,nao_pretendem_alterar_seus_investimentos_em_renda_va,1,Não pretendem alterar seus investimentos em renda variável,Do not wish to alter them,,,1
-proximos_meses,planejam_diminuir_a_alocacao_em_renda_variavel,planejam_diminuir_a_alocacao_em_renda_variavel,2,Planejam diminuir a alocação em renda variável,Wish to decrease them,,,1
-proximos_meses,planejam_aumentar_a_alocacao_em_renda_variavel,planejam_aumentar_a_alocacao_em_renda_variavel,3,Planejam aumentar a alocação em renda variável,Wish to increase them,,,1
-classes_ativos,acoes,acoes,1,Ações,Equities,,,1
-classes_ativos,fundos_imobiliarios,fundos_imobiliarios,2,Fundos Imobiliários,REITs,,,1
-classes_ativos,investimentos_internacionais_dolar_fundos_etfs_etc,investimentos_internacionais_dolar_fundos_etfs_etc,3,"Investimentos Internacionais (dólar, fundos, ETFs, etc)",International Investments,,,1
-classes_ativos,fundos_multimercado,fundos_multimercado,4,Fundos Multimercado,Hedge Funds,,,1
-classes_ativos,fundos_de_renda_variavel,fundos_de_renda_variavel,5,Fundos de Renda Variável,Equities Funds,,,1
-classes_ativos,ouro_e_commodities,ouro_e_commodities,6,Ouro e commodities,Gold,Ouro,,1
-classes_ativos,fundos_de_renda_fixa,fundos_de_renda_fixa,7,Fundos de Renda Fixa,Fixed Income Funds,,,1
-classes_ativos,tesouro_direto_e_renda_fixa,tesouro_direto_e_renda_fixa,8,Tesouro Direto e Renda Fixa,Fixed Income,,,1
-classes_ativos,criptoativos,criptoativos,9,Criptoativos,Cryptocurrencies,,,1
-classes_ativos,outra,outra,10,Outra,,,,1
-pct_internacional,0_a_5,0_a_5,1,0% a 5%,0% to 5%,,,1
-pct_internacional,5_a_10,5_a_10,2,5% a 10%,5% to 10%,,,1
-pct_internacional,10_a_20,10_a_20,3,10% a 20%,10% to 20%,,,1
-pct_internacional,20_a_50,20_a_50,4,20% a 50%,20% to 50%,,,1
-pct_internacional,acima_de_50,acima_de_50,5,Acima de 50%,Above 50%,,,1
-interesse_internacional,fundos_internacionais,fundos_internacionais,1,Fundos Internacionais,,,,1
-interesse_internacional,acoes_internacionais,acoes_internacionais,2,Ações internacionais,,,,1
-interesse_internacional,etfs,etfs,3,ETFs,,,,1
-interesse_internacional,dolar,dolar,4,Dólar,,,,1
-interesse_internacional,bonds,bonds,5,Bonds,,Bonds e crédito,,1
-interesse_internacional,nao_estao_interessados_por_investimentos_internacion,nao_estao_interessados_por_investimentos_internacion,6,Não estão interessados por investimentos internacionais,,Não estão interessados,,1
-interesse_internacional,outros,outros,7,Outros,,,,1
-riscos_bolsa,crescimento_economico_fraco_na_china,crescimento_economico_fraco_na_china,1,Crescimento econômico fraco na China,China disapointing economic recovery,,,1
-riscos_bolsa,recessao_nos_eua,recessao_nos_eua,2,Recessão nos EUA,US recession,,,1
-riscos_bolsa,politica_monetaria_mais_dura_nos_mercados_desenvolvi,juros_mais_altos_nos_mercados_desenvolvidos,3,Política monetária mais dura nos mercados desenvolvidos,Tighter monetary policy in DM,,,1
-riscos_bolsa,riscos_fiscais_no_brasil,riscos_fiscais_no_brasil,4,Riscos fiscais no Brasil,Domestic fiscal risks,,,1
-riscos_bolsa,inflacao_em_alta_no_brasil,inflacao_em_alta_no_brasil,5,Inflação em alta no Brasil,Higher domestic inflation,,,1
-riscos_bolsa,juros_mais_altos_no_brasil,juros_mais_altos_que_o_esperado_o_brasil,6,Juros mais altos no Brasil,Higher domestic rates,,,1
-riscos_bolsa,dolar_mais_alto,dolar_mais_alto,7,Dólar mais alto,Strong USD,,,1
-riscos_bolsa,instabilidade_politica,instabilidade_politica_eleicoes,8,Instabilidade política,Political instability,,,1
-riscos_bolsa,riscos_geopoliticos,riscos_geopoliticos_guerra,9,Riscos geopolíticos,Geopolitical events,,,1
-riscos_bolsa,interferencia_em_empresas_estatais,interferencia_em_empresas_estatais,10,Interferência em empresas estatais,Government intervention on SOEs,,,1
-riscos_bolsa,politica_tarifaria_americana,politica_tarifaria_americana,11,Política tarifária americana,US tariff policy,,,1
-riscos_bolsa,desaceleracao_economica_global,desaceleracao_economica_global,12,Desaceleração econômica global,Global economic slowdown,,,1
-riscos_bolsa,juros_mais_altos_nos_mercados_desenvolvidos,juros_mais_altos_nos_mercados_desenvolvidos,13,Juros mais altos nos mercados desenvolvidos,Higher interest rates in developed markets,Política monetária mais dura nos mercados desenvolvidos,,1
-riscos_bolsa,juros_mais_altos_que_o_esperado_o_brasil,juros_mais_altos_que_o_esperado_o_brasil,14,Juros mais altos que o esperado o Brasil,Higher-than-expected interest rates in Brazil,Juros mais altos no Brasil,,1
-riscos_bolsa,instabilidade_politica_eleicoes,instabilidade_politica_eleicoes,15,Instabilidade política/ Eleições,Political instability / elections,Instabilidade política,,1
-riscos_bolsa,riscos_geopoliticos_guerra,riscos_geopoliticos_guerra,16,Riscos geopolíticos/ Guerra,Geopolitical risks / war,Riscos geopolíticos,,1
-riscos_bolsa,choque_do_petroleo,choque_do_petroleo,17,Choque do petróleo,Oil shock,,,1
-riscos_bolsa,outra,outra,18,Outra,Others,,,1
-setores,agro,agro,1,Agro,Agribusiness,,,1
-setores,bens_de_capital,bens_de_capital,2,Bens de Capital,Capital Goods,,,1
-setores,educacao,educacao,3,Educação,Education,,,1
-setores,financeiro,financeiro,4,Financeiro,Financials,,,1
-setores,alimentos_bebidas,alimentos_bebidas,5,Alimentos & Bebidas,Food & Beverages,,,1
-setores,saude,saude,6,Saúde,Health Care,,,1
-setores,mineracao_siderurgia,mineracao_siderurgia,7,Mineração & Siderurgia,Metals & Mining,,,1
-setores,petroleo_gas,petroleo_gas,8,Petróleo & Gás,Oil & Gas,,,1
-setores,papel_celulose,papel_celulose,9,Papel & Celulose,Pulp & Paper,,,1
-setores,imobiliario,imobiliario,10,Imobiliário,Real Estate,,,1
-setores,varejo,varejo,11,Varejo,Retail,,,1
-setores,telecomunicacoes_midia_e_tecnologia,telecomunicacoes_midia_e_tecnologia,12,"Telecomunicações, Mídia e Tecnologia",TMT,,,1
-setores,eletricas_saneamento,eletricas_saneamento,13,Elétricas & Saneamento,Utilities,,,1
-setores,transportes,transportes,14,Transportes,Transportation,,,1
-sentimento,0,0,1,0,,,,1
-sentimento,1,1,2,1,,,,1
-sentimento,2,2,3,2,,,,1
-sentimento,3,3,4,3,,,,1
-sentimento,4,4,5,4,,,,1
-sentimento,5,5,6,5,,,,1
-sentimento,6,6,7,6,,,,1
-sentimento,7,7,8,7,,,,1
-sentimento,8,8,9,8,,,,1
-sentimento,9,9,10,9,,,,1
-sentimento,10,10,11,10,,,,1
-ibovespa_alvo,abaixo_de_150_mil_pontos,abaixo_de_150_mil_pontos,1,Abaixo de 150 mil pontos,,,150000,1
-ibovespa_alvo,entre_150_mil_e_170_mil_pontos,entre_150_mil_e_170_mil_pontos,2,Entre 150 mil e 170 mil pontos,,,160000,1
-ibovespa_alvo,entre_170_mil_e_190_mil_pontos,entre_170_mil_e_190_mil_pontos,3,Entre 170 mil e 190 mil pontos,,,180000,1
-ibovespa_alvo,entre_190_e_200_mil_pontos,entre_190_e_200_mil_pontos,4,Entre 190 e 200 mil pontos,,,195000,1
-ibovespa_alvo,entre_200_e_210_mil_pontos,entre_200_e_210_mil_pontos,5,Entre 200 e 210 mil pontos,,,205000,1
-ibovespa_alvo,acima_de_210_mil_pontos,acima_de_210_mil_pontos,6,Acima de 210 mil pontos,,,210000,1
-apetite_risco,cortes_de_juros_no_brasil,cortes_de_juros_no_brasil,1,Cortes de juros no Brasil;,Cortes de juros no Brasil,,,1
-apetite_risco,queda_de_juros_nos_eua_e_no_mundo,queda_de_juros_nos_eua_e_no_mundo,2,Queda de juros nos EUA e no mundo,Queda de juros nos EUA e mundo,,,1
-apetite_risco,mercado_voltando_a_ter_performance_solida,mercado_voltando_a_ter_performance_solida,3,Mercado voltando a ter performance sólida,Mercado voltando a ter performance sólida,,,1
-apetite_risco,melhora_na_recuperacao_economica_global,melhora_na_recuperacao_economica_global,4,Melhora na recuperação econômica global;,Melhora na recuperação econômica da China,,,1
-apetite_risco,mudanca_de_rumo_na_politica_economica,mudanca_de_rumo_na_politica_economica,5,Mudança de rumo na política econômica;,Mudança de rumo na política econômica,,,1
-apetite_risco,outra,outra,6,Outra,Outra,,,1
-setores,nao_estao_interessados,nao_estao_interessados,15,Não estão interessados,Not interested,,,1
+﻿pergunta_id,alternativa_id,serie_id,ordem,rotulo_pt,rotulo_en,aliases,valor_num,ativa,no_grafico
+regiao,centro_oeste,centro_oeste,1,Centro Oeste,Midwest,,,1,1
+regiao,nordeste,nordeste,2,Nordeste,Northeast,,,1,1
+regiao,norte,norte,3,Norte,North,,,1,1
+regiao,sudeste,sudeste,4,Sudeste,Southeast,,,1,1
+regiao,sul,sul,5,Sul,South,,,1,1
+alocacao_rv,0_a_25,0_a_25,1,0% a 25%,0% to 25%,,,1,1
+alocacao_rv,25_a_50,25_a_50,2,25% a 50%,25% to 50%,,,1,1
+alocacao_rv,0_a_10,0_a_10,3,0% a 10%,0% to 10%,,,1,1
+alocacao_rv,10_a_25,10_a_25,4,10% a 25%,10% to 25%,,,1,1
+alocacao_rv,50_a_75,50_a_75,5,50% a 75%,50% to 75%,,,1,1
+alocacao_rv,75_a_100,75_a_100,6,75% a 100%,75% to 100%,,,1,1
+proximos_meses,nao_pretendem_alterar_seus_investimentos_em_renda_va,nao_pretendem_alterar_seus_investimentos_em_renda_va,1,Não pretendem alterar seus investimentos em renda variável,Do not wish to alter them,,,1,1
+proximos_meses,planejam_diminuir_a_alocacao_em_renda_variavel,planejam_diminuir_a_alocacao_em_renda_variavel,2,Planejam diminuir a alocação em renda variável,Wish to decrease them,,,1,1
+proximos_meses,planejam_aumentar_a_alocacao_em_renda_variavel,planejam_aumentar_a_alocacao_em_renda_variavel,3,Planejam aumentar a alocação em renda variável,Wish to increase them,,,1,1
+classes_ativos,acoes,acoes,1,Ações,Equities,,,1,1
+classes_ativos,fundos_imobiliarios,fundos_imobiliarios,2,Fundos Imobiliários,REITs,,,1,1
+classes_ativos,investimentos_internacionais_dolar_fundos_etfs_etc,investimentos_internacionais_dolar_fundos_etfs_etc,3,"Investimentos Internacionais (dólar, fundos, ETFs, etc)","International Investments (USD, funds, ETFs, etc)",,,1,1
+classes_ativos,fundos_multimercado,fundos_multimercado,4,Fundos Multimercado,Hedge Funds,,,1,1
+classes_ativos,fundos_de_renda_variavel,fundos_de_renda_variavel,5,Fundos de Renda Variável,Equities Funds,,,1,1
+classes_ativos,ouro_e_commodities,ouro_e_commodities,6,Ouro e commodities,Gold and commodities,Ouro,,1,1
+classes_ativos,fundos_de_renda_fixa,fundos_de_renda_fixa,7,Fundos de Renda Fixa,Fixed Income Funds,,,1,1
+classes_ativos,tesouro_direto_e_renda_fixa,tesouro_direto_e_renda_fixa,8,Tesouro Direto e Renda Fixa,Fixed Income,,,1,1
+classes_ativos,criptoativos,criptoativos,9,Criptoativos,Cryptocurrencies,,,1,1
+classes_ativos,outra,outra,10,Outra,,,,1,0
+pct_internacional,0_a_5,0_a_5,1,0% a 5%,0% to 5%,,,1,1
+pct_internacional,5_a_10,5_a_10,2,5% a 10%,5% to 10%,,,1,1
+pct_internacional,10_a_20,10_a_20,3,10% a 20%,10% to 20%,,,1,1
+pct_internacional,20_a_50,20_a_50,4,20% a 50%,20% to 50%,,,1,1
+pct_internacional,acima_de_50,acima_de_50,5,Acima de 50%,Above 50%,,,1,1
+interesse_internacional,fundos_internacionais,fundos_internacionais,1,Fundos Internacionais,International Funds,,,1,1
+interesse_internacional,acoes_internacionais,acoes_internacionais,2,Ações internacionais,BDRs,,,1,1
+interesse_internacional,etfs,etfs,3,ETFs,ETFs,,,1,1
+interesse_internacional,dolar,dolar,4,Dólar,Dollar,,,1,1
+interesse_internacional,bonds,bonds,5,Bonds,Bonds,Bonds e crédito,,1,1
+interesse_internacional,nao_estao_interessados_por_investimentos_internacion,nao_estao_interessados_por_investimentos_internacion,6,Não estão interessados por investimentos internacionais,Not interested,Não estão interessados,,1,1
+interesse_internacional,outros,outros,7,Outros,Other,,,1,0
+riscos_bolsa,crescimento_economico_fraco_na_china,crescimento_economico_fraco_na_china,1,Crescimento econômico fraco na China,China disapointing economic recovery,,,1,1
+riscos_bolsa,recessao_nos_eua,recessao_nos_eua,2,Recessão nos EUA,US recession,,,1,1
+riscos_bolsa,politica_monetaria_mais_dura_nos_mercados_desenvolvi,juros_mais_altos_nos_mercados_desenvolvidos,3,Política monetária mais dura nos mercados desenvolvidos,Tighter monetary policy in DM,,,1,1
+riscos_bolsa,riscos_fiscais_no_brasil,riscos_fiscais_no_brasil,4,Riscos fiscais no Brasil,Fiscal risks in Brazil,,,1,1
+riscos_bolsa,inflacao_em_alta_no_brasil,inflacao_em_alta_no_brasil,5,Inflação em alta no Brasil,Rising inflation in Brazil,,,1,1
+riscos_bolsa,juros_mais_altos_no_brasil,juros_mais_altos_que_o_esperado_o_brasil,6,Juros mais altos no Brasil,Higher domestic rates,,,1,1
+riscos_bolsa,dolar_mais_alto,dolar_mais_alto,7,Dólar mais alto,Stronger US dollar,,,1,1
+riscos_bolsa,instabilidade_politica,instabilidade_politica_eleicoes,8,Instabilidade política,Political instability,,,1,1
+riscos_bolsa,riscos_geopoliticos,riscos_geopoliticos_guerra,9,Riscos geopolíticos,Geopolitical events,,,1,1
+riscos_bolsa,interferencia_em_empresas_estatais,interferencia_em_empresas_estatais,10,Interferência em empresas estatais,Government intervention on SOEs,,,1,1
+riscos_bolsa,politica_tarifaria_americana,politica_tarifaria_americana,11,Política tarifária americana,US tariff policy,,,1,1
+riscos_bolsa,desaceleracao_economica_global,desaceleracao_economica_global,12,Desaceleração econômica global,Global economic slowdown,,,1,1
+riscos_bolsa,juros_mais_altos_nos_mercados_desenvolvidos,juros_mais_altos_nos_mercados_desenvolvidos,13,Juros mais altos nos mercados desenvolvidos,Higher rates in developed markets,Política monetária mais dura nos mercados desenvolvidos,,1,1
+riscos_bolsa,juros_mais_altos_que_o_esperado_o_brasil,juros_mais_altos_que_o_esperado_o_brasil,14,Juros mais altos que o esperado o Brasil,Higher-than-expected local rates,Juros mais altos no Brasil,,1,1
+riscos_bolsa,instabilidade_politica_eleicoes,instabilidade_politica_eleicoes,15,Instabilidade política/ Eleições,Political instability / elections,Instabilidade política,,1,1
+riscos_bolsa,riscos_geopoliticos_guerra,riscos_geopoliticos_guerra,16,Riscos geopolíticos/ Guerra,Geopolitical risks / war,Riscos geopolíticos,,1,1
+riscos_bolsa,choque_do_petroleo,choque_do_petroleo,17,Choque do petróleo,Oil shock,,,1,1
+riscos_bolsa,outra,outra,18,Outra,Others,,,1,0
+setores,agro,agro,1,Agro,Agribusiness,,,1,1
+setores,bens_de_capital,bens_de_capital,2,Bens de Capital,Capital Goods,,,1,1
+setores,educacao,educacao,3,Educação,Education,,,1,1
+setores,financeiro,financeiro,4,Financeiro,Financials,,,1,1
+setores,alimentos_bebidas,alimentos_bebidas,5,Alimentos & Bebidas,Food & Beverages,,,1,1
+setores,saude,saude,6,Saúde,Health Care,,,1,1
+setores,mineracao_siderurgia,mineracao_siderurgia,7,Mineração & Siderurgia,Metals & Mining,,,1,1
+setores,petroleo_gas,petroleo_gas,8,Petróleo & Gás,Oil & Gas,,,1,1
+setores,papel_celulose,papel_celulose,9,Papel & Celulose,Pulp & Paper,,,1,1
+setores,imobiliario,imobiliario,10,Imobiliário,Real Estate,,,1,1
+setores,varejo,varejo,11,Varejo,Retail,,,1,1
+setores,telecomunicacoes_midia_e_tecnologia,telecomunicacoes_midia_e_tecnologia,12,"Telecomunicações, Mídia e Tecnologia",TMT,,,1,1
+setores,eletricas_saneamento,eletricas_saneamento,13,Elétricas & Saneamento,Utilities,,,1,1
+setores,transportes,transportes,14,Transportes,Transportation,,,1,1
+sentimento,0,0,1,0,,,,1,1
+sentimento,1,1,2,1,,,,1,1
+sentimento,2,2,3,2,,,,1,1
+sentimento,3,3,4,3,,,,1,1
+sentimento,4,4,5,4,,,,1,1
+sentimento,5,5,6,5,,,,1,1
+sentimento,6,6,7,6,,,,1,1
+sentimento,7,7,8,7,,,,1,1
+sentimento,8,8,9,8,,,,1,1
+sentimento,9,9,10,9,,,,1,1
+sentimento,10,10,11,10,,,,1,1
+ibovespa_alvo,abaixo_de_150_mil_pontos,abaixo_de_150_mil_pontos,1,Abaixo de 150 mil pontos,Below 150k,,150000,1,1
+ibovespa_alvo,entre_150_mil_e_170_mil_pontos,entre_150_mil_e_170_mil_pontos,2,Entre 150 mil e 170 mil pontos,Between 150k - 170k,,160000,1,1
+ibovespa_alvo,entre_170_mil_e_190_mil_pontos,entre_170_mil_e_190_mil_pontos,3,Entre 170 mil e 190 mil pontos,Between 170k - 190k,,180000,1,1
+ibovespa_alvo,entre_190_e_200_mil_pontos,entre_190_e_200_mil_pontos,4,Entre 190 e 200 mil pontos,Between 190k - 200k,,195000,1,1
+ibovespa_alvo,entre_200_e_210_mil_pontos,entre_200_e_210_mil_pontos,5,Entre 200 e 210 mil pontos,Between 200k - 210k,,205000,1,1
+ibovespa_alvo,acima_de_210_mil_pontos,acima_de_210_mil_pontos,6,Acima de 210 mil pontos,Above 210k points,,210000,1,1
+apetite_risco,cortes_de_juros_no_brasil,cortes_de_juros_no_brasil,1,Cortes de juros no Brasil,Rate cuts in Brazil,,,1,1
+apetite_risco,queda_de_juros_nos_eua_e_no_mundo,queda_de_juros_nos_eua_e_no_mundo,2,Queda de juros nos EUA e no mundo,Rate cuts in the US and globally,,,1,1
+apetite_risco,mercado_voltando_a_ter_performance_solida,mercado_voltando_a_ter_performance_solida,3,Mercado voltando a ter performance sólida,Market returning to show solid performance,,,1,1
+apetite_risco,melhora_na_recuperacao_economica_da_china,melhora_na_recuperacao_economica_da_china,4,Melhora na recuperação econômica da China,Melhora na recuperação econômica da China,,,1,1
+apetite_risco,mudanca_de_rumo_na_politica_economica,mudanca_de_rumo_na_politica_economica,5,Mudança de rumo na política econômica,Change of direction in political economy,,,1,1
+apetite_risco,melhora_na_recuperacao_economica_global,melhora_na_recuperacao_economica_global,6,Melhora na recuperação econômica global,Improvement in global economy recovery,,,1,1
+apetite_risco,outra,outra,7,Outra,Other,,,1,1
+setores,nao_estao_interessados,nao_estao_interessados,15,Não estão interessados,Not interested,,,1,1

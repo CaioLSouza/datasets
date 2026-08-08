@@ -62,7 +62,7 @@ Tabela na planilha do mesmo nome.
 | Aba | Uma linha por | Colunas |
 |---|---|---|
 | `d_<pergunta>` | alternativa | `ordem`, `alternativa_id`, `rotulo_pt`, `rotulo_en`, `atual`, `anterior`, `delta` |
-| `s_<pergunta>` | onda | `onda`, `data`, e uma coluna por alternativa |
+| `s_<pergunta>` | onda | `onda`, `data`, e uma coluna por alternativa. 36 ondas, exceto `proximos_meses` e `alocacao_rv`, que usam **18** — é o que o report mostra |
 | `medias` | onda | `sentimento_media`, `ibovespa_media`, `respondentes` |
 | `capa` | onda | as três séries de intenção + `ibovespa` |
 | `meta` | onda | `data`, `respondentes`, `regime` |
@@ -79,6 +79,12 @@ As 11 perguntas recorrentes: `regiao`, `alocacao_rv`, `proximos_meses`,
 **`d_` e `s_` servem os dois decks.** Há duas colunas de rótulo, `rotulo_pt` e
 `rotulo_en` — no gráfico PT você usa uma como eixo de categorias, no EN a outra.
 Mesma tabela, mesmos números.
+
+As legendas em inglês vieram das células auxiliares da aba `Charts` da planilha
+antiga, que é de onde o deck EN as lia — são as publicadas. A coluna A da `Base`
+não servia: em `ibovespa_alvo` ela guarda o ponto médio numérico, em
+`interesse_internacional` está vazia, e em `apetite_risco` tem o texto em
+português.
 
 Nas tabelas `s_`, o cabeçalho de cada coluna é o rótulo em português (é dele que
 o Excel tira o nome da série). Para a versão inglesa, aponte o nome da série
@@ -202,6 +208,7 @@ Você mexe em **um arquivo**: `registro.csv`. Uma linha por alternativa.
 | `serie_id` | Junta alternativas que são o mesmo conceito com nomes diferentes ao longo do tempo. É o que mantém a série temporal contínua. |
 | `rotulo_pt` / `rotulo_en` | Como aparece no Forms e no slide. |
 | `aliases` | Nomes **antigos** do mesmo rótulo, separados por `\|`. |
+| `no_grafico` | `0` tira a alternativa das tabelas `d_`/`s_`, mantendo a apuração. É assim que o `"Outra"` de `classes_ativos`, `riscos_bolsa` e `interesse_internacional` fica fora — o deck não mostra. Em `apetite_risco` mostra, então lá é `1`. |
 | `valor_num` | Só em `ibovespa_alvo`: o ponto médio da faixa, para a resposta média. |
 | `ordem` | Ordem de exibição nas perguntas de enumeração fixa. |
 
