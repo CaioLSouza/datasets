@@ -52,7 +52,8 @@ from comum import (BLOCO_POR_ID, BLOCOS, CAMINHOS, LIMITE_CATCHALL, LIXO,
                    ONDAS_NA_SERIE, ONDAS_VIVAS, SLOTS_Q_MES,
                    ULTIMA_ONDA_PUBLICADA, Log,
                    catchall_por_bloco, data_da_onda, indice_de_rotulos,
-                   ler_registro, normalizar, onda_anterior, onda_de, slug,
+                   ler_registro, normalizar, onda_anterior, onda_de,
+                   ordem_natural, slug,
                    tokens)
 
 META_COLS = ('Id', 'Hora de início', 'Hora de conclusão', 'Email', 'Nome',
@@ -618,8 +619,9 @@ def main() -> int:
         if bloco['ordenar'] == 'valor':
             linhas.sort(key=lambda l: -(l[3] if isinstance(l[3], float) else -1))
         else:
-            ordem_reg = {r['alternativa_id']: r['ordem'] for r in regs}
-            linhas.sort(key=lambda l: ordem_reg.get(l[0], 999))
+            # faixa numérica ordena pelo número; o resto pela ordem do registro
+            chave = ordem_natural(regs)
+            linhas.sort(key=lambda l: chave.get(l[0], 9e9))
         for i, l in enumerate(linhas, 1):
             l.insert(0, i)
         tabelas[f'd_{pid}'] = (
@@ -639,7 +641,12 @@ def main() -> int:
         series = [sid for sid in escolhida
                   if escolhida[sid]['alternativa_id'] in vivas
                   and any(valor_serie(o, sid) is not None for o in janela)]
-        series.sort(key=lambda sid: escolhida[sid]['ordem'])
+        if bloco['ordenar'] == 'valor':
+            series.sort(key=lambda sid: escolhida[sid]['ordem'])
+        else:
+            chave_s = ordem_natural(regs)
+            series.sort(key=lambda sid: chave_s.get(
+                escolhida[sid]['alternativa_id'], 9e9))
         cab = ['onda', 'data'] + [escolhida[sid]['rotulo_pt'] for sid in series]
         serie = []
         for o in janela:
