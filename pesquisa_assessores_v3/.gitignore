@@ -1,0 +1,45 @@
+# =====================================================================
+#  NADA DE DADO DE PESQUISA NO GIT
+# =====================================================================
+#  O repositório onde isto vive hoje é PÚBLICO. As pastas abaixo têm
+#  resposta de assessor, nome de arquivo de origem e número não
+#  publicado. Não podem sair daqui.
+# =====================================================================
+
+# A fonte da verdade: ~124 mil linhas, uma por respondente x pergunta
+# x alternativa marcada. É o arquivo mais sensível do projeto.
+_dados/
+
+# Log de cada rodada. Nomeia o arquivo de origem e lista os write-ins
+# de texto livre, que às vezes trazem opinião identificável.
+_logs/
+
+# Mapa da Base antiga, gerado no congelamento.
+_saida/
+
+# As bases geradas, caso alguém aponte a saída para cá em vez da rede.
+bases/
+PA Base *.xlsx
+PA Respostas *.csv
+
+# Export do Forms, caso seja copiado para cá para teste.
+input_forms/
+Pesquisa *.xlsx
+PA Principal.xlsx
+
+# ---------------------------------------------------------------------
+# O congelamento (valores_publicados.csv) NÃO está ignorado de
+# propósito: ele é o que garante que número publicado não muda, e o
+# pipeline não funciona sem ele. São percentuais que já foram ao ar,
+# não resposta individual.
+#
+# Se o repositório for público, pense duas vezes assim mesmo.
+# ---------------------------------------------------------------------
+
+# Cópias .txt dos .bat, feitas só para passar pelo bloqueio de anexo
+# do Gmail. São descartáveis — o original versionado é o .bat.
+*.bat.txt
+
+__pycache__/
+*.pyc
+~$*
