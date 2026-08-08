@@ -222,7 +222,9 @@ pesquisa_assessores\
 ├── atualizar.py                ← o motor
 ├── reconciliar.py              ← confere contra o publicado
 ├── congelar.py                 ← roda 1x, na instalação
-├── montar_charts.ps1           ← roda 1x, cria a PA Charts.xlsx
+├── montar_charts.py            ← roda 1x, cria a PA Charts.xlsx
+├── montar_charts.ps1           ← o PowerShell que ele executa (fonte)
+├── _gerar_montar_charts.py     ← reembute o .ps1 no .py, com verificação
 ├── _logs\                      ← log de cada rodada
 ├── _saida\                     ← base completa publicada (auditoria)
 └── _v1_descartada\             ← tentativas anteriores, arquivadas
@@ -274,13 +276,24 @@ python reconciliar.py
 O BLOCO 1 tem que dar 100%.
 
 ```bash
-powershell -ExecutionPolicy Bypass -File montar_charts.ps1
+python montar_charts.py
 ```
 
 Cria a `PA Charts.xlsx` com as 27 consultas prontas. Leva uns **3 a 4 minutos** —
 é o Excel montando consulta por consulta, e roda só esta vez. Ele **se recusa a
 rodar se o arquivo já existir**, então não tem como apagar seus gráficos por
 acidente.
+
+O trabalho quem faz é PowerShell (criar consulta Power Query exige COM do Excel,
+e o `pywin32` não está instalado). O `montar_charts.py` carrega o PowerShell
+embutido, grava num temporário e executa. Existe assim por um motivo prático: o
+Gmail se recusa a anexar `.ps1` por política de executáveis e o GitHub costuma
+estar bloqueado na máquina corporativa — um `.py` único passa pelos dois
+caminhos.
+
+Se precisar mexer no PowerShell, edite o `montar_charts.ps1` e rode
+`python _gerar_montar_charts.py`. Ele reembute e **confere que o resultado é
+byte a byte idêntico** ao `.ps1`; se não for, ele para.
 
 Depois disso é sua vez: monte os gráficos sobre as tabelas. E daí em diante, todo
 mês, só o `rodar.bat` + Atualizar Tudo.
