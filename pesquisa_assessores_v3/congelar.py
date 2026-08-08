@@ -19,15 +19,33 @@ antiga. Está tudo em FAIXAS_BASE, abaixo.
 from __future__ import annotations
 
 import csv
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
 
 import openpyxl
 
-from comum import BASE_ANTIGA, CAMINHOS, Log, escrever_registro, normalizar, onda_de, slug
+from comum import (BASE_ANTIGA, CAMINHOS, Log, escrever_registro, normalizar,
+                   onda_de, slug)
 
 B = BASE_ANTIGA
+
+
+def limpar_rotulo(texto: str) -> str:
+    """Tira a sujeira que a Base antiga acumulou no texto do rótulo.
+
+    Três rótulos de apetite_risco tinham um ";" colado no fim
+    ("Cortes de juros no Brasil;"), e alguns trazem espaço-não-quebrável
+    (U+00A0) no lugar do espaço. Isso apareceria no eixo do gráfico.
+
+    Não afeta o casamento nem o alternativa_id: os dois passam por
+    normalizar(), que já ignora ";" e U+00A0. É só o texto de exibição.
+    """
+    t = str(texto).replace(" ", " ").replace("​", "")
+    t = re.sub(r"\s+", " ", t).strip()
+    return t.rstrip(";").strip()
+
 
 # --------------------------------------------------------------------------
 # Onde cada pergunta mora na aba Base da PA Principal.
@@ -91,6 +109,91 @@ NOVAS = [
     ('setores', 'Não estão interessados', 'Not interested'),
 ]
 
+# --------------------------------------------------------------------------
+# Rótulos da coluna C que estão ERRADOS na Base. Chaveado por linha.
+#
+# A linha 323 de apetite_risco tem na coluna C "Melhora na recuperação
+# econômica global;" -- o mesmo texto da linha 325. Mas a coluna A, que é por
+# onde as fórmulas do deck casam, diz "Melhora na recuperação econômica DA
+# CHINA". São duas alternativas diferentes, e o dado bruto confirma: "Melhora
+# na recuperação econômica da China" aparece como resposta nas ondas de 2024.
+#
+# Sem esta correção as duas colapsam numa alternativa só e o valor publicado
+# sai errado -- 12,15% (a linha de cima) em vez dos 21,5% que o deck mostra.
+CORRIGIR_ROTULO = {
+    ('apetite_risco', 323): 'Melhora na recuperação econômica da China',
+}
+
+# --------------------------------------------------------------------------
+# Legendas em inglês, copiadas das células auxiliares da aba Charts -- que é
+# de onde o deck em inglês as lê. São elas que foram publicadas.
+#
+# A coluna A da Base não serve para isto: em ibovespa_alvo ela guarda o ponto
+# médio numérico (150000), em interesse_internacional está vazia, e em
+# apetite_risco tem o texto em PORTUGUÊS. Nos três casos o inglês só existe
+# na Charts.
+ROTULOS_EN = {
+    'ibovespa_alvo': {
+        'Abaixo de 150 mil pontos': 'Below 150k',
+        'Entre 150 mil e 170 mil pontos': 'Between 150k - 170k',
+        'Entre 170 mil e 190 mil pontos': 'Between 170k - 190k',
+        'Entre 190 e 200 mil pontos': 'Between 190k - 200k',
+        'Entre 200 e 210 mil pontos': 'Between 200k - 210k',
+        'Acima de 210 mil pontos': 'Above 210k points',
+    },
+    'interesse_internacional': {
+        'Fundos Internacionais': 'International Funds',
+        'Ações internacionais': 'BDRs',
+        'ETFs': 'ETFs',
+        'Dólar': 'Dollar',
+        'Bonds': 'Bonds',
+        'Não estão interessados por investimentos internacionais': 'Not interested',
+        'Outros': 'Other',
+    },
+    'apetite_risco': {
+        'Cortes de juros no Brasil': 'Rate cuts in Brazil',
+        'Queda de juros nos EUA e no mundo': 'Rate cuts in the US and globally',
+        'Mercado voltando a ter performance sólida':
+            'Market returning to show solid performance',
+        'Melhora na recuperação econômica global':
+            'Improvement in global economy recovery',
+        'Mudança de rumo na política econômica':
+            'Change of direction in political economy',
+        'Outra': 'Other',
+    },
+    # riscos_bolsa e classes_ativos TÊM inglês na coluna A da Base, mas com
+    # outra redação. Aqui fica a do deck, que é a publicada.
+    'riscos_bolsa': {
+        'Desaceleração econômica global': 'Global economic slowdown',
+        'Juros mais altos nos mercados desenvolvidos':
+            'Higher rates in developed markets',
+        'Riscos fiscais no Brasil': 'Fiscal risks in Brazil',
+        'Inflação em alta no Brasil': 'Rising inflation in Brazil',
+        'Juros mais altos que o esperado o Brasil':
+            'Higher-than-expected local rates',
+        'Dólar mais alto': 'Stronger US dollar',
+        'Riscos geopolíticos/ Guerra': 'Geopolitical risks / war',
+        'Instabilidade política/ Eleições': 'Political instability / elections',
+        'Choque do petróleo': 'Oil shock',
+    },
+    'classes_ativos': {
+        'Ouro e commodities': 'Gold and commodities',
+        'Investimentos Internacionais (dólar, fundos, ETFs, etc)':
+            'International Investments (USD, funds, ETFs, etc)',
+    },
+}
+
+# Alternativas que o deck NÃO mostra no gráfico, embora sejam apuradas.
+# Conferido nas células auxiliares da Charts: riscos mostra 9 alternativas,
+# classes 9 e interesse 6 -- em nenhuma delas o "Outra" aparece. Já em
+# apetite_risco ele aparece, como "Other". Por isso é por alternativa e não
+# uma regra geral.
+FORA_DO_GRAFICO = [
+    ('classes_ativos', 'Outra'),
+    ('riscos_bolsa', 'Outra'),
+    ('interesse_internacional', 'Outros'),
+]
+
 
 # --------------------------------------------------------------------------
 def ler_ondas(ws, log) -> list[dict]:
@@ -141,8 +244,13 @@ def montar_registro(ws, log) -> tuple[list[dict], dict]:
         for linha in range(ini, fim + 1):
             pt = ws.cell(linha, B['col_pt']).value
             en = ws.cell(linha, B['col_en']).value
-            pt_txt = str(pt).strip() if pt is not None else ''
-            en_txt = str(en).strip() if en is not None else ''
+            pt_txt = limpar_rotulo(pt) if pt is not None else ''
+            en_txt = limpar_rotulo(en) if en is not None else ''
+            corrigido = CORRIGIR_ROTULO.get((pid, linha))
+            if corrigido:
+                log(f'  rótulo corrigido L{linha}: {pt_txt[:40]!r} -> '
+                    f'{corrigido[:40]!r} (a coluna A da Base, que o deck casa)')
+                pt_txt = corrigido
             if not pt_txt and not en_txt:
                 continue
             chave = normalizar(pt_txt) or normalizar(en_txt)
@@ -160,7 +268,8 @@ def montar_registro(ws, log) -> tuple[list[dict], dict]:
                 registro.append(dict(
                     pergunta_id=pid, alternativa_id=alt_id, serie_id=alt_id,
                     ordem=ordem, rotulo_pt=pt_txt, rotulo_en=en_txt,
-                    aliases='', valor_num=valor_num, ativa=True))
+                    aliases='', valor_num=valor_num, ativa=True,
+                    no_grafico=True))
             de_onde[(pid, alt_id)].append(linha)
 
     espelhadas = {k: v for k, v in de_onde.items() if len(v) > 1}
@@ -205,8 +314,40 @@ def montar_registro(ws, log) -> tuple[list[dict], dict]:
         registro.append(dict(
             pergunta_id=pid, alternativa_id=slug(pt), serie_id=slug(pt),
             ordem=ordem, rotulo_pt=pt, rotulo_en=en, aliases='',
-            valor_num='', ativa=True))
+            valor_num='', ativa=True, no_grafico=True))
         log(f'  nova: {pid}/{pt!r} (não existia na Base)')
+
+    # legendas em inglês do deck
+    n_en = 0
+    for pid, mapa in ROTULOS_EN.items():
+        for pt, en in mapa.items():
+            alvo = por_rotulo.get((pid, normalizar(pt)))
+            if alvo is None:
+                log(f'  aviso: legenda EN sem alternativa: {pid}/{pt[:40]!r}')
+                continue
+            if alvo['rotulo_en'] != en:
+                alvo['rotulo_en'] = en
+                n_en += 1
+    log(f'  legendas em inglês do deck aplicadas: {n_en}')
+
+    # alternativas que o deck não mostra no gráfico
+    for pid, pt in FORA_DO_GRAFICO:
+        alvo = por_rotulo.get((pid, normalizar(pt)))
+        if alvo is None:
+            log(f'  aviso: exclusão sem alternativa: {pid}/{pt!r}')
+            continue
+        alvo['no_grafico'] = False
+        log(f'  fora do gráfico: {pid}/{pt!r} (o deck não mostra)')
+
+    # rótulo puramente numérico (a escala 0-10) é igual nos dois idiomas
+    sem_en = [(r['pergunta_id'], r['rotulo_pt'][:38]) for r in registro
+              if not r['rotulo_en'] and r['no_grafico']
+              and not r['rotulo_pt'].strip().isdigit()]
+    if sem_en:
+        log(f'  AVISO: {len(sem_en)} alternativas de gráfico sem legenda em '
+            f'inglês -- o deck EN vai sair sem rótulo nelas:')
+        for pid, pt in sem_en[:12]:
+            log(f'    {pid}/{pt!r}')
 
     log(f'registro: {len(registro)} alternativas em {len(FAIXAS_BASE)} perguntas')
     return registro, de_onde

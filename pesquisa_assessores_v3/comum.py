@@ -48,7 +48,9 @@ CAMINHOS = {
 # negócio, não técnica.
 ULTIMA_ONDA_PUBLICADA = 202607
 
-# Quantas ondas as tabelas de série temporal carregam.
+# Quantas ondas as tabelas de série temporal carregam, por padrão. Um bloco
+# pode pedir outra janela com `ondas_serie` -- proximos_meses e alocacao_rv
+# usam 18, que é o que o report mostra.
 ONDAS_NA_SERIE = 36
 
 # Quantas perguntas do mês a planilha comporta. Cada uma ganha a sua própria
@@ -80,10 +82,11 @@ BLOCOS = [
     dict(id='regiao', tipo='unica', ordenar='natural',
          match=[r'regiao do brasil']),
 
-    dict(id='alocacao_rv', tipo='unica', ordenar='natural',
+    # ondas_serie: o report usa 18 meses nesta série, não os 36 do padrão
+    dict(id='alocacao_rv', tipo='unica', ordenar='natural', ondas_serie=18,
          match=[r'alocacao em renda variavel esta']),
 
-    dict(id='proximos_meses', tipo='unica', ordenar='natural',
+    dict(id='proximos_meses', tipo='unica', ordenar='natural', ondas_serie=18,
          match=[r'cenario dos proximos meses']),
 
     dict(id='classes_ativos', tipo='multipla', ordenar='valor',
@@ -228,7 +231,8 @@ def ordem_natural(registros: list[dict]) -> dict[str, float]:
 # registro.csv
 # --------------------------------------------------------------------------
 CAMPOS_REGISTRO = ['pergunta_id', 'alternativa_id', 'serie_id', 'ordem',
-                   'rotulo_pt', 'rotulo_en', 'aliases', 'valor_num', 'ativa']
+                   'rotulo_pt', 'rotulo_en', 'aliases', 'valor_num', 'ativa',
+                   'no_grafico']
 
 
 def ler_registro(caminho: Path | None = None) -> list[dict]:
@@ -238,6 +242,11 @@ def ler_registro(caminho: Path | None = None) -> list[dict]:
     for r in linhas:
         r['ordem'] = int(r['ordem'] or 0)
         r['ativa'] = (r.get('ativa', '1').strip() or '1') != '0'
+        # no_grafico: a alternativa existe e é apurada, mas fica fora das
+        # tabelas d_/s_. É o caso do "Outra" em classes_ativos, riscos_bolsa e
+        # interesse_internacional -- o deck não mostra. Em apetite_risco
+        # mostra, então lá fica.
+        r['no_grafico'] = (r.get('no_grafico', '1').strip() or '1') != '0'
     return linhas
 
 
