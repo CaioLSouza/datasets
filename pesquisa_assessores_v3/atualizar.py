@@ -23,8 +23,10 @@ As abas de PA Charts Data.xlsx:
   capa           a série da capa mais o fechamento do Ibovespa.
   meta           uma linha por onda: data, respondentes, regime.
   corrente       uma linha só, a onda do report. Para título de slide.
-  q_mes          a pergunta do mês. É a exceção: ela muda de forma todo mês,
-                 então o gráfico dela é o único que você remonta.
+  q_mes_1..N     as perguntas do mês, UMA TABELA CADA, em slot fixo. São a
+                 exceção: mudam de forma a cada edição, então os gráficos delas
+                 são os únicos que você remonta. Slot sem pergunta fica vazio.
+  q_mes          a união das anteriores, com a coluna `slot`. Para auditoria.
 
 Regras que o código garante:
 
@@ -47,7 +49,8 @@ from pathlib import Path
 import openpyxl
 
 from comum import (BLOCO_POR_ID, BLOCOS, CAMINHOS, LIMITE_CATCHALL, LIXO,
-                   ONDAS_NA_SERIE, ONDAS_VIVAS, ULTIMA_ONDA_PUBLICADA, Log,
+                   ONDAS_NA_SERIE, ONDAS_VIVAS, SLOTS_Q_MES,
+                   ULTIMA_ONDA_PUBLICADA, Log,
                    catchall_por_bloco, data_da_onda, indice_de_rotulos,
                    ler_registro, normalizar, onda_anterior, onda_de, slug,
                    tokens)
@@ -699,27 +702,65 @@ def main() -> int:
         [[corrente, d, resp_de(corrente) or None,
           f'{MESES_PT[d.month - 1]}/{d.year}', f'{MESES_EN[d.month - 1]} {d.year}']])
 
-    # ---- q_mes: a exceção
+    # ---- q_mes: a exceção. UMA TABELA POR PERGUNTA, em slot fixo.
+    #
+    # Não dá para juntar numa tabela só: numa onda com duas perguntas do mês
+    # isso misturaria as alternativas numa ordenação única e -- pior --
+    # somaria o texto livre das duas num "Outra" só. São perguntas diferentes,
+    # e no histórico ter mais de uma é a norma (10 ondas com 2, 6 com 3).
+    #
+    # Slot fixo, sempre emitido mesmo vazio: o gráfico é montado uma vez e num
+    # mês com menos perguntas o slot sobrando fica em branco.
     itens = q_mes.get(corrente, [])
-    reais = [i for i in itens if i['qtd'] > 1]
-    livres = [i for i in itens if i['qtd'] <= 1]
-    linhas = [[i + 1, it['pergunta'][:200], it['rotulo'][:200], None, it['pct'],
-               it['qtd']] for i, it in enumerate(sorted(reais,
-                                                        key=lambda r: r['pct']))]
-    if livres:
-        soma = sum(i['pct'] for i in livres)
-        linhas.append([len(linhas) + 1,
-                       livres[0]['pergunta'][:200] if livres else '',
-                       'Outra', 'Other', soma, sum(i['qtd'] for i in livres)])
-        linhas.sort(key=lambda l: l[4])
+    perguntas = list(dict.fromkeys(i['pergunta'] for i in itens))  # ordem do Forms
+    CAB_Q = ['ordem', 'pergunta', 'rotulo_pt', 'rotulo_en', 'pct', 'qtd']
+
+    def montar_slot(pergunta):
+        """As linhas de UMA pergunta do mês, com o "Outra" dela própria."""
+        if pergunta is None:
+            return []
+        do_slot = [i for i in itens if i['pergunta'] == pergunta]
+        reais = [i for i in do_slot if i['qtd'] > 1]
+        livres = [i for i in do_slot if i['qtd'] <= 1]
+        linhas = [[0, pergunta[:200], it['rotulo'][:200], None, it['pct'],
+                   it['qtd']] for it in sorted(reais, key=lambda r: r['pct'])]
+        if livres:
+            linhas.append([0, pergunta[:200], 'Outra', 'Other',
+                           sum(i['pct'] for i in livres),
+                           sum(i['qtd'] for i in livres)])
+            linhas.sort(key=lambda l: l[4])
         for i, l in enumerate(linhas, 1):
             l[0] = i
-    tabelas['q_mes'] = (['ordem', 'pergunta', 'rotulo_pt', 'rotulo_en', 'pct',
-                         'qtd'], linhas)
+        return linhas
+
+    for slot in range(1, SLOTS_Q_MES + 1):
+        p = perguntas[slot - 1] if slot <= len(perguntas) else None
+        linhas = montar_slot(p)
+        tabelas[f'q_mes_{slot}'] = (CAB_Q, linhas)
+        if p:
+            n_livres = sum(1 for i in itens
+                           if i['pergunta'] == p and i['qtd'] <= 1)
+            log(f'  q_mes_{slot}: {len(linhas) - (1 if n_livres else 0)} '
+                f'alternativas'
+                + (f' + {n_livres} de texto livre em "Outra"' if n_livres else '')
+                + f' | {p[:52]!r}')
+
+    # a união das perguntas, com a coluna `slot`, para auditoria
+    tabelas['q_mes'] = (CAB_Q + ['slot'],
+                        [l + [s] for s in range(1, len(perguntas) + 1)
+                         for l in montar_slot(perguntas[s - 1])])
+
+    if len(perguntas) > SLOTS_Q_MES:
+        log('')
+        log(f'  ATENÇÃO: a onda tem {len(perguntas)} perguntas do mês e só '
+            f'{SLOTS_Q_MES} slots. Ficaram FORA das tabelas de gráfico:')
+        for p in perguntas[SLOTS_Q_MES:]:
+            log(f'    {p[:88]!r}')
+        log(f'    Aumente SLOTS_Q_MES no comum.py; depois monte a PA Charts do')
+        log(f'    zero (montar_charts.py) para criar as consultas novas.')
     if itens:
-        log(f'  q_mes: {len(reais)} alternativas'
-            + (f' + {len(livres)} de texto livre somadas em "Outra"' if livres else '')
-            + ' -- a tradução para inglês (coluna rotulo_en) segue manual')
+        log(f'  ({len(perguntas)} pergunta(s) do mês nesta onda; a tradução '
+            f'para inglês na coluna rotulo_en segue manual)')
 
     if suspeitos:
         log('')
