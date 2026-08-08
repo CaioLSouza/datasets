@@ -182,6 +182,48 @@ def slug(texto: str) -> str:
     return s[:52] or 'x'
 
 
+def chave_faixa(rotulo: str) -> float | None:
+    """Extrai o número que ordena um rótulo de faixa. None se não for faixa.
+
+    Serve as perguntas de enumeração fixa cujo rótulo é um intervalo -- as
+    faixas de alocação, de percentual de clientes, de pontos do Ibovespa, e a
+    escala 0-10. Ordenar por este número em vez da posição no registro é o que
+    garante faixa em ordem crescente **mesmo quando o conjunto muda**: quando
+    as faixas do Ibovespa rolarem de ano, ou quando entrar uma faixa no meio,
+    não há `ordem` para acertar à mão.
+
+    Foi assim que apareceu o problema: na Base antiga, "0% a 10%" e
+    "10% a 25%" tinham sido acrescentadas ABAIXO de "25% a 50%", então a ordem
+    do registro saía 25-50, 0-10, 10-25, 50-75, 75-100.
+
+    "Abaixo de X" e "Acima de X" são deslocados para fora do intervalo, senão
+    "Abaixo de 150 mil" empataria com "Entre 150 mil e 170 mil".
+    """
+    n = normalizar(rotulo)
+    numeros = re.findall(r'\d+(?:[.,]\d+)?', n.replace('.', ''))
+    if not numeros:
+        return None
+    valor = float(numeros[0].replace(',', '.'))
+    if n.startswith(('abaixo', 'menos', 'ate', 'below', 'under')):
+        return valor - 0.5
+    if n.startswith(('acima', 'mais', 'above', 'over')):
+        return valor + 0.5
+    return valor
+
+
+def ordem_natural(registros: list[dict]) -> dict[str, float]:
+    """alternativa_id -> chave de ordenação, para blocos ordenar='natural'.
+
+    Usa o número da faixa quando TODOS os rótulos são faixas; caso contrário
+    cai na ordem do registro (região, "planejam aumentar/diminuir" etc., que
+    não têm número e cuja ordem é editorial).
+    """
+    chaves = {r['alternativa_id']: chave_faixa(r['rotulo_pt']) for r in registros}
+    if chaves and all(v is not None for v in chaves.values()):
+        return chaves
+    return {r['alternativa_id']: float(r['ordem']) for r in registros}
+
+
 # --------------------------------------------------------------------------
 # registro.csv
 # --------------------------------------------------------------------------
