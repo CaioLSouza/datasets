@@ -43,7 +43,7 @@ O Python não sabe onde nenhum gráfico mora. Ele entrega **tabelas**; o Excel
 cuida do resto. É isso que faz "Atualizar Tudo" bastar.
 
 **Por que a fonte é CSV e não as abas do xlsx:** cada consulta lê só o seu
-arquivo. Lendo do xlsx, as 27 consultas reparseavam a pasta de trabalho inteira
+arquivo. Lendo do xlsx, as 32 consultas reparseavam a pasta de trabalho inteira
 uma a uma e o Atualizar Tudo levava **143 segundos**. Com um CSV por tabela caiu
 para **35**. A `PA Charts Data.xlsx` continua sendo gerada, mas só para você
 folhear — ninguém a consulta.
@@ -126,7 +126,7 @@ ondas até ULTIMA_ONDA_PUBLICADA  ->  valor CONGELADO (o que foi publicado)
 ondas novas                     ->  valor CALCULADO do dado bruto
 ```
 
-**Conferido: 3.574 de 3.574 valores publicados saem idênticos**, cobrindo as 76
+**Conferido: 3.606 de 3.606 valores publicados saem idênticos**, cobrindo as 76
 ondas de fev/2020 a jul/2026. O `reconciliar.py` mede isso a qualquer momento —
 o BLOCO 1 tem que dar 100%.
 
@@ -145,7 +145,7 @@ discordam muito. Em jul/2026 são três:
 | | Publicado | Recalculado | |
 |---|---|---|---|
 | `classes_ativos / Tesouro Direto e Renda Fixa` | 57,9% | **84,1%** | +26,2 pp |
-| `riscos_bolsa / Outra` | 100,0% | **0,9%** | −99,1 pp |
+| `riscos_bolsa / Outra` | 100,0% | **0,9%** | −99,1 pp (fora do gráfico) |
 | `apetite_risco / Mudança de rumo na política econômica` | 15,9% | **58,9%** | +43,0 pp |
 
 As tabelas trazem o **publicado**, porque a onda está congelada. Se quiser os
@@ -249,9 +249,10 @@ pesquisa_assessores\
 ├── atualizar.py                ← o motor
 ├── reconciliar.py              ← confere contra o publicado
 ├── congelar.py                 ← roda 1x, na instalação
-├── montar_charts.py            ← roda 1x, cria a PA Charts.xlsx
+├── montar_charts.py            ← roda 1x, cria a PA Charts.xlsx (sem gráficos)
 ├── montar_charts.ps1           ← o PowerShell que ele executa (fonte)
 ├── _gerar_montar_charts.py     ← reembute o .ps1 no .py, com verificação
+├── desenhar_graficos.ps1       ← roda 1x, faz a versão COM gráficos
 ├── _logs\                      ← log de cada rodada
 ├── _saida\                     ← base completa publicada (auditoria)
 └── _v1_descartada\             ← tentativas anteriores, arquivadas
@@ -273,6 +274,29 @@ Pesquisa assessores\
 **Sobre a PA Principal:** ela não é lida por nada no fluxo mensal. Mas é dela
 que saiu o `historico_congelado.csv`, e sem ela não dá para regerar esse arquivo
 — são as 39 ondas que não têm dado bruto. Guarde.
+
+---
+
+## As duas versões da planilha
+
+| Arquivo | O que tem |
+|---|---|
+| `PA Charts.xlsx` | as 32 tabelas, **sem** gráfico |
+| `PA Charts com graficos.xlsx` | as mesmas 32 + **13 gráficos** já montados |
+
+A segunda é gerada a partir da primeira pelo `desenhar_graficos.ps1`, então as
+duas são consistentes por construção. **Escolha uma para ser a de trabalho** — o
+caminho dos CSVs está embutido nas consultas, então o nome e a pasta do arquivo
+não importam para o Atualizar Tudo funcionar.
+
+Os 13 gráficos são ponto de partida com a formatação certa (tipo, orientação e
+cores extraídos dos gráficos da PA Principal), não o slide final.
+
+**Os slots de pergunta do mês vazios não têm gráfico**, de propósito: um gráfico
+sem série não ganha série quando a tabela enche, e uma série apontando para uma
+célula só não expande no Atualizar Tudo — testado, a tabela foi de 0 para 4
+linhas e o gráfico ficou em 1 ponto. No mês em que um slot for usado, copie o
+gráfico do `q_mes_1` e troque a tabela de origem.
 
 ---
 
@@ -306,7 +330,7 @@ O BLOCO 1 tem que dar 100%.
 python montar_charts.py
 ```
 
-Cria a `PA Charts.xlsx` com as 27 consultas prontas. Leva uns **3 a 4 minutos** —
+Cria a `PA Charts.xlsx` com as 32 consultas prontas. Leva uns **3 a 4 minutos** —
 é o Excel montando consulta por consulta, e roda só esta vez. Ele **se recusa a
 rodar se o arquivo já existir**, então não tem como apagar seus gráficos por
 acidente.
@@ -322,8 +346,14 @@ Se precisar mexer no PowerShell, edite o `montar_charts.ps1` e rode
 `python _gerar_montar_charts.py`. Ele reembute e **confere que o resultado é
 byte a byte idêntico** ao `.ps1`; se não for, ele para.
 
-Depois disso é sua vez: monte os gráficos sobre as tabelas. E daí em diante, todo
-mês, só o `rodar.bat` + Atualizar Tudo.
+E, se quiser a versão com os gráficos já desenhados:
+
+```bash
+powershell -ExecutionPolicy Bypass -File desenhar_graficos.ps1
+```
+
+Depois disso é sua vez: ajustar os gráficos. E daí em diante, todo mês, só o
+`rodar.bat` + Atualizar Tudo.
 
 ### Testar sem a rede
 
