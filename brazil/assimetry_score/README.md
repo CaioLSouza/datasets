@@ -21,5 +21,9 @@ Data-base dos resultados oficiais: **12/08/2026**.
 
 Em [`regime_conditional_spread/`](regime_conditional_spread/) está a mesma carteira construída em **todos** os pregões, e não apenas nas datas de sinal. Ela mede o retorno do long P90 / short P10 sem nenhum filtro de regime e por faixa de z-score, o que isola quanto do resultado vem do regime e quanto vem do basket em si: sempre ligado, ele fica 0,77% a.a. abaixo do CDI, contra um spread médio de +2,71% quando a entrada é feita no cruzamento de +1,5.
 
+## Deck
+
+O deck do report está em [`report/`](report/). É um **rascunho**: apenas a Seção 2 está completa, a Seção 1 ainda tem placeholders.
+
 Os CSVs neste diretório são snapshots anteriores do ranking atual e foram preservados para compatibilidade e rastreabilidade.
 
