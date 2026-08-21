@@ -1,0 +1,6 @@
+check,max_abs_diff,passed
+long_return_matches_official,9.020562075079397e-17,True
+short_underlying_return_matches_official,8.326672684688674e-17,True
+pure_spread_return_matches_official,9.8879238130678e-17,True
+overlay_excess_return_matches_official,9.020562075079397e-17,True
+all_13_signal_dates_rebuilt,0.0,True
