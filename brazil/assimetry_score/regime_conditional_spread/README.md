@@ -27,6 +27,7 @@ O spread é pior no regime calmo e melhor nos extremos. Entrar no pregão em que
 
 | Arquivo | Conteúdo |
 | --- | --- |
+| `section2_slide1_charts.xlsx` | Workbook chart-ready dos quatro exhibits do slide 1 da Seção 2: curva de riqueza do basket sempre ligado contra o CDI, distribuição do spread forward de 21 pregões, tabela resumo e contribuição acumulada de cada perna. Abas `Leia_me` e `Dicionario` primeiro. |
 | `daily_portfolio_forward_returns.csv` | Uma linha por pregão: pontas selecionadas, retorno forward de 21 pregões do long, do short e do spread, quality médio de cada ponta, z-score bruto e da SMA21 na data e a faixa de regime. |
 | `bucket_forward_returns.csv` | Agregação por faixa de z-score: número de pregões, spread médio e mediano, hit rate, retorno médio de cada ponta e desvio-padrão. |
 | `always_on_blocks.csv` | Os 138 blocos não sobrepostos de 21 pregões da versão sempre ligada, com retorno do spread, do overlay, do CDI e as curvas de riqueza. |
