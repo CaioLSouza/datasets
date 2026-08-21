@@ -8,7 +8,7 @@ Data-base: **12/08/2026**. Período: 15/05/2014 a 12/08/2026.
 
 ## Resultado
 
-Rodando de forma contínua, em blocos não sobrepostos de 21 pregões, o long P90 / short P10 **não bate o CDI**: excesso de −0,77% a.a., hit rate de 49,3% em 138 blocos e drawdown relativo máximo de −25,2%. O retorno médio do spread por bloco é de −0,06%.
+Rodando de forma contínua, em blocos não sobrepostos de 21 pregões, o long P90 / short P10 **não bate o CDI**: 9,29% a.a. contra 10,16% do CDI, um excesso de −0,78% a.a., hit rate de 49,3% em 138 blocos e drawdown relativo máximo de −26,3%. O retorno médio do spread por bloco é de −0,06%.
 
 O que muda a resposta é o regime. Classificando cada pregão pelo z-score causal da SMA21 do índice de divergência, o retorno forward de 21 pregões do mesmo basket é:
 
@@ -30,7 +30,8 @@ O spread é pior no regime calmo e melhor nos extremos. Entrar no pregão em que
 | `section2_slide1_charts.xlsx` | Workbook chart-ready dos quatro exhibits do slide 1 da Seção 2: curva de riqueza do basket sempre ligado contra o CDI, distribuição do spread forward de 21 pregões, tabela resumo e contribuição acumulada de cada perna. Abas `Leia_me` e `Dicionario` primeiro. |
 | `daily_portfolio_forward_returns.csv` | Uma linha por pregão: pontas selecionadas, retorno forward de 21 pregões do long, do short e do spread, quality médio de cada ponta, z-score bruto e da SMA21 na data e a faixa de regime. |
 | `bucket_forward_returns.csv` | Agregação por faixa de z-score: número de pregões, spread médio e mediano, hit rate, retorno médio de cada ponta e desvio-padrão. |
-| `always_on_blocks.csv` | Os 138 blocos não sobrepostos de 21 pregões da versão sempre ligada, com retorno do spread, do overlay, do CDI e as curvas de riqueza. |
+| `always_on_daily.csv` | Série diária da versão sempre ligada: CDI, overlay, retorno total e as curvas de riqueza, pregão a pregão. |
+| `always_on_blocks.csv` | Os 138 blocos não sobrepostos de 21 pregões da versão sempre ligada, com retorno de cada perna, do spread, do overlay e do CDI. |
 | `always_on_summary.csv` | Métricas consolidadas da versão sempre ligada. |
 | `validation.csv` | Conferência da reconstrução contra os eventos oficiais. |
 
@@ -48,7 +49,9 @@ A única diferença é que a carteira é montada em todos os pregões, e não ap
 
 O baseline sempre ligado percorre blocos consecutivos e não sobrepostos de 21 pregões desde o início da amostra, de forma que ele seja diretamente comparável ao overlay condicional, que também usa eventos não sobrepostos.
 
-Os retornos vêm dos preços ajustados com forward fill no calendário do índice, exatamente como no motor oficial. Nas 13 datas de sinal oficiais a reconstrução reproduz `long_return`, `short_underlying_return`, `pure_spread_return` e `overlay_excess_return` com diferença máxima da ordem de 1e-17 — a conferência está em `validation.csv`.
+A série é construída pregão a pregão, e não bloco a bloco. Entre um bloco e o seguinte existe um pregão de intervalo, herdado da convenção oficial de eventos não sobrepostos; nos dias sem posição o capital rende CDI, como na especificação oficial. O CDI acumula em todos os dias corridos entre dois pregões — uma segunda-feira carrega três dias de juros — e o CAGR é anualizado por 252 pregões. Com essa convenção o CDI daqui reproduz o publicado no relatório: 10,16% a.a., diferença de 4e-16 na curva de riqueza contra a série oficial.
+
+Os retornos das ações vêm dos preços ajustados com forward fill no calendário do índice, exatamente como no motor oficial. Nas 13 datas de sinal oficiais a reconstrução reproduz `long_return`, `short_underlying_return`, `pure_spread_return` e `overlay_excess_return` com diferença máxima da ordem de 1e-17 — a conferência está em `validation.csv`.
 
 ## Ressalvas
 
