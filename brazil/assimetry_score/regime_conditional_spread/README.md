@@ -27,13 +27,31 @@ O spread é pior no regime calmo e melhor nos extremos. Entrar no pregão em que
 
 | Arquivo | Conteúdo |
 | --- | --- |
-| `section2_slide1_charts.xlsx` | Workbook chart-ready dos quatro exhibits do slide 1 da Seção 2: curva de riqueza do basket sempre ligado contra o CDI, distribuição do spread forward de 21 pregões, tabela resumo e contribuição acumulada de cada perna. Abas `Leia_me` e `Dicionario` primeiro. |
+| `position_metrics.csv` | As seis métricas por posição de 21 pregões das quatro versões — incondicional e condicional, cada uma com e sem quality. É a fonte das duas tabelas do relatório e a única forma de comparar as quatro com definição idêntica. |
+| `always_on_quality_ablation_daily.csv` | Série diária das duas variantes incondicionais, com e sem o filtro de quality. |
+| `always_on_quality_ablation_yearly.csv` | Excesso sobre o CDI por ano-calendário nas duas variantes. 2014 e 2026 são anos parciais. |
+| `always_on_quality_ablation_summary.csv` | Métricas consolidadas das duas variantes incondicionais. |
 | `daily_portfolio_forward_returns.csv` | Uma linha por pregão: pontas selecionadas, retorno forward de 21 pregões do long, do short e do spread, quality médio de cada ponta, z-score bruto e da SMA21 na data e a faixa de regime. |
 | `bucket_forward_returns.csv` | Agregação por faixa de z-score: número de pregões, spread médio e mediano, hit rate, retorno médio de cada ponta e desvio-padrão. |
-| `always_on_daily.csv` | Série diária da versão sempre ligada: CDI, overlay, retorno total e as curvas de riqueza, pregão a pregão. |
-| `always_on_blocks.csv` | Os 138 blocos não sobrepostos de 21 pregões da versão sempre ligada, com retorno de cada perna, do spread, do overlay e do CDI. |
-| `always_on_summary.csv` | Métricas consolidadas da versão sempre ligada. |
+| `always_on_daily.csv` | Série diária da versão incondicional: CDI, overlay, retorno total e as curvas de riqueza, pregão a pregão. |
+| `always_on_blocks.csv` | Os 138 blocos não sobrepostos de 21 pregões da versão incondicional, com retorno de cada perna, do spread, do overlay e do CDI. |
+| `always_on_summary.csv` | Métricas consolidadas da versão incondicional. |
 | `validation.csv` | Conferência da reconstrução contra os eventos oficiais. |
+
+## Nota de terminologia
+
+O relatório chama esta versão de **incondicional** e a que espera o cruzamento de +1,50 de **condicional**, o par padrão em asset pricing. Os nomes de arquivo e de coluna mantêm `always_on` por compatibilidade com o que já estava publicado.
+
+## O que o filtro de quality faz em cada regime
+
+O ablation revela uma assimetria que não aparece olhando só uma das versões:
+
+| | Com quality | Sem quality |
+| --- | ---: | ---: |
+| Incondicional, excesso a.a. | −0,78% | −3,27% |
+| Condicional, excesso a.a. | +16,60% | +13,48% |
+
+Sem o filtro de regime o quality é o que evita o desastre; com ele, é refinamento. O trabalho pesado é do timing, não da seleção de nomes.
 
 ## Metodologia
 
@@ -47,7 +65,7 @@ A construção de carteira é idêntica à da especificação oficial:
 
 A única diferença é que a carteira é montada em todos os pregões, e não apenas nos cruzamentos. As faixas de z-score usam a SMA21 causal (expanding, `shift(1)`, mínimo de 252 observações), a mesma série que define o regime oficial.
 
-O baseline sempre ligado percorre blocos consecutivos e não sobrepostos de 21 pregões desde o início da amostra, de forma que ele seja diretamente comparável ao overlay condicional, que também usa eventos não sobrepostos.
+O baseline incondicional percorre blocos consecutivos e não sobrepostos de 21 pregões desde o início da amostra, de forma que ele seja diretamente comparável ao overlay condicional, que também usa eventos não sobrepostos.
 
 A série é construída pregão a pregão, e não bloco a bloco. Entre um bloco e o seguinte existe um pregão de intervalo, herdado da convenção oficial de eventos não sobrepostos; nos dias sem posição o capital rende CDI, como na especificação oficial. O CDI acumula em todos os dias corridos entre dois pregões — uma segunda-feira carrega três dias de juros — e o CAGR é anualizado por 252 pregões. Com essa convenção o CDI daqui reproduz o publicado no relatório: 10,16% a.a., diferença de 4e-16 na curva de riqueza contra a série oficial.
 
