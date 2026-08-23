@@ -25,5 +25,9 @@ Em [`regime_conditional_spread/`](regime_conditional_spread/) está a mesma cart
 
 O deck do report está em [`report/`](report/). É um **rascunho**: apenas a Seção 2 está completa, a Seção 1 ainda tem placeholders.
 
+## Escolha dos parâmetros
+
+Em [`threshold_holding_grid/`](threshold_holding_grid/) está a grade cruzada de threshold de entrada por holding, que testa as duas dimensões ao mesmo tempo em vez das fatias 1-D do pacote oficial. Ela mostra que a célula escolhida não é o máximo da grade e que o argumento a favor dela é estabilidade e tamanho de amostra.
+
 Os CSVs neste diretório são snapshots anteriores do ranking atual e foram preservados para compatibilidade e rastreabilidade.
 
