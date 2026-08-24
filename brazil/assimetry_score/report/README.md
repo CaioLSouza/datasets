@@ -49,6 +49,16 @@ As Tables 5 e 6 são a grade cruzada de threshold por holding, em excesso ativo 
 
 Os exhibits da Seção 1 vêm de planilhas em share de rede da XP que não estão replicadas aqui; os números citados no corpo foram lidos do cache dos próprios gráficos do deck.
 
+## Correções de renderização
+
+Dois defeitos que só apareciam no PowerPoint, não nos renders de conferência — o LibreOffice desenha os dois casos de outro jeito e passava por cima deles.
+
+**Chart 11, barras negativas apontando para cima.** O eixo de categorias estava com `crosses="min"`, ancorado no piso da escala em vez do zero. Como a barra nasce da linha do eixo, o −4,55% de 2014 era desenhado subindo de −10 até −4,55. Voltou para `crosses="autoZero"`; quem leva os rótulos para a base é só o `tickLblPos="low"`, que não mexe na origem da barra.
+
+**Chart 12, anos do eixo girados na vertical.** A série diária entrava como 2.767 categorias de texto, quase todas em branco, com o ano no primeiro pregão de cada ano. O PowerPoint dimensiona o eixo pelos 2.767 rótulos, não cabe e gira todos. Passou a ser um `dateAx` de verdade — categoria em número de série, `baseTimeUnit="days"`, uma marca por ano — e aí o eixo escolhe as marcas sozinho e escreve deitado.
+
+Nenhum número mudou: as correções são de eixo, não de dado.
+
 ## Ressalvas do conteúdo
 
 Os resultados da Seção 2 são in-sample: pesos, threshold, média móvel, filtro de quality e holding foram escolhidos após múltiplos testes sobre a mesma amostra. São 13 eventos independentes, o intervalo bootstrap de 95% da média por posição vai de −0,40% a +3,18% e o sign test unilateral dá p = 0,133. Três eventos respondem por 112% do ganho logarítmico acumulado. Custos, aluguel dos shorts, liquidez, capacidade e neutralização de beta e setor não estão modelados. A leitura defensável é de uma oportunidade episódica de convergência, não de um alpha estrutural validado — e é assim que o deck apresenta o resultado.
