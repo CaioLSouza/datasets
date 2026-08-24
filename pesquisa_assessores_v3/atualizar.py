@@ -53,7 +53,7 @@ from comum import (BLOCO_POR_ID, BLOCOS, CAMINHOS, LIMITE_CATCHALL, LIXO,
                    ULTIMA_ONDA_PUBLICADA, Log,
                    catchall_por_bloco, data_da_onda, indice_de_rotulos,
                    ler_registro, normalizar, onda_anterior, onda_de,
-                   ondas_na_janela, ordem_natural, slug,
+                   ler_csv, num, ondas_na_janela, ordem_natural, slug,
                    tokens)
 
 META_COLS = ('Id', 'Hora de início', 'Hora de conclusão', 'Email', 'Nome',
@@ -256,8 +256,8 @@ def ler_congelado(log) -> dict:
         log(f'AVISO: {caminho.name} não existe -- rode congelar.py primeiro.')
         return dict(valores={}, medias={}, respondentes={})
     valores, medias, resp = {}, {}, {}
-    with open(caminho, encoding='utf-8-sig', newline='') as fh:
-        for r in csv.DictReader(fh):
+    for r in ler_csv(caminho):
+        if True:
             if r['extraordinaria'] == '1':
                 continue
             onda = int(r['onda'])
@@ -278,11 +278,22 @@ def ler_ibovespa(log) -> dict[int, float]:
     if not caminho.exists():
         log(f'AVISO: {caminho.name} não existe -- a capa sai sem Ibovespa.')
         return {}
+    linhas = ler_csv(caminho)
     out = {}
-    with open(caminho, encoding='utf-8-sig', newline='') as fh:
-        for r in csv.DictReader(fh):
-            if r.get('fechamento'):
-                out[int(r['onda'])] = float(r['fechamento'])
+    for r in linhas:
+        onda, fech = num(r.get('onda')), num(r.get('fechamento'))
+        if onda is not None and fech is not None:
+            out[int(onda)] = fech
+    if not out:
+        # O arquivo existe e mesmo assim nao saiu nada. Antes isto passava
+        # calado e o Ibovespa sumia da capa com o csv ali na pasta.
+        log(f'ERRO: {caminho.name} existe mas nao consegui ler nenhuma linha.')
+        log(f'  colunas encontradas: {list(linhas[0]) if linhas else "nenhuma"}')
+        log(f'  esperado: onda, data, fechamento')
+        log(f'  se voce abriu no Excel, ele pode ter salvo com outro separador.')
+        log(f'  Salve como CSV UTF-8 ou rode congelar.py para regerar.')
+    else:
+        log(f'ibovespa: {len(out)} fechamentos lidos')
     return out
 
 

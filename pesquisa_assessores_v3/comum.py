@@ -241,6 +241,44 @@ def ondas_na_janela(ondas: list[int], corrente: int, meses: int) -> list[int]:
     primeira = (total // 12) * 100 + (total % 12) + 1
     return [o for o in ondas if primeira <= o <= corrente]
 
+
+# --------------------------------------------------------------------------
+# leitura de CSV tolerante
+# --------------------------------------------------------------------------
+def ler_csv(caminho: Path) -> list[dict]:
+    """Lê um CSV nosso aceitando as duas formas que ele aparece na prática.
+
+    Estes CSVs são editados à mão, e editar à mão quer dizer abrir no Excel.
+    O Excel em português salva CSV com ';' de separador e ',' de decimal --
+    e o leitor antigo, que só entendia ',' e '.', devolvia ZERO linhas sem
+    reclamar. O sintoma era o Ibovespa sumir da capa com o arquivo ali,
+    intacto, na pasta.
+
+    Então: o separador é farejado pelo cabeçalho, e quem lê número usa
+    `num()`, que aceita as duas notações.
+    """
+    with open(caminho, encoding='utf-8-sig', newline='') as fh:
+        cabecalho = fh.readline()
+        sep = ';' if cabecalho.count(';') > cabecalho.count(',') else ','
+        fh.seek(0)
+        return list(csv.DictReader(fh, delimiter=sep))
+
+
+def num(valor) -> float | None:
+    """Número de um campo de CSV, aceitando '1234.56' e '1234,56'."""
+    if valor is None:
+        return None
+    t = str(valor).strip()
+    if not t:
+        return None
+    # 1.234,56 (pt-BR) -> 1234.56 ; 1234.56 (en) fica como está
+    if ',' in t:
+        t = t.replace('.', '').replace(',', '.')
+    try:
+        return float(t)
+    except ValueError:
+        return None
+
 # --------------------------------------------------------------------------
 # registro.csv
 # --------------------------------------------------------------------------
@@ -251,8 +289,7 @@ CAMPOS_REGISTRO = ['pergunta_id', 'alternativa_id', 'serie_id', 'ordem',
 
 def ler_registro(caminho: Path | None = None) -> list[dict]:
     caminho = caminho or CAMINHOS['registro']
-    with open(caminho, encoding='utf-8-sig', newline='') as fh:
-        linhas = [r for r in csv.DictReader(fh) if r.get('pergunta_id')]
+    linhas = [r for r in ler_csv(caminho) if r.get('pergunta_id')]
     for r in linhas:
         r['ordem'] = int(r['ordem'] or 0)
         r['ativa'] = (r.get('ativa', '1').strip() or '1') != '0'
