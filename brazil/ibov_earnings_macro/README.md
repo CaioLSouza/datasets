@@ -40,7 +40,9 @@ O objetivo é explicar revisões contemporâneas de earnings, não prever retorn
 | `results/energy_petrobras_brent_regressions.csv` | Energia, Petrobras e empresas ex-Petrobras com BCOM ou Brent |
 | `results/energy_petrobras_brent_summary.json` | Cobertura, concentração e correlações da decomposição de Energia |
 
-A planilha consolidada está em `workbook/earnings_12m_fwd_sector_2008_2026.xlsx`.
+O workbook completo está em `workbook/ibovespa_earnings_macro_consolidado.xlsx`. Ele reúne resumo executivo, sensibilidades do índice e dos setores, matriz Focus–swap, inflação, ex-commodities, decomposição de Energia, séries mensais, regressões, diagnósticos e fontes em 18 abas.
+
+A planilha de apoio com apenas as séries setoriais permanece em `workbook/earnings_12m_fwd_sector_2008_2026.xlsx`.
 
 ![Earnings 12 meses à frente por setor, base 100](charts/earnings_12m_fwd_sector_base100.png)
 
