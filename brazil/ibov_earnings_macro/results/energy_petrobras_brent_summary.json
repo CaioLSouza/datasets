@@ -1,0 +1,244 @@
+{
+  "coverage": {
+    "Energy reported": {
+      "first": "2008-01",
+      "last": "2026-09",
+      "observations": 225
+    },
+    "IBOV": {
+      "first": "2008-01",
+      "last": "2026-09",
+      "observations": 225
+    },
+    "Brava Energia": {
+      "first": "2022-01",
+      "last": "2026-09",
+      "observations": 57
+    },
+    "Oleo e Gas Participacoes": {
+      "first": "2010-01",
+      "last": "2013-10",
+      "observations": 46
+    },
+    "PRIO": {
+      "first": "2020-09",
+      "last": "2026-09",
+      "observations": 73
+    },
+    "PetroReconcavo": {
+      "first": "2023-09",
+      "last": "2026-09",
+      "observations": 37
+    },
+    "Petrobras": {
+      "first": "2008-01",
+      "last": "2026-09",
+      "observations": 225
+    },
+    "Ex-Petrobras dynamic": {
+      "first": "2010-01",
+      "last": "2026-09",
+      "observations": 119
+    },
+    "Ex-Petrobras core (PRIO + Brava)": {
+      "first": "2022-01",
+      "last": "2026-09",
+      "observations": 57
+    }
+  },
+  "brent": {
+    "source": "EIA Europe Brent Spot Price FOB, last daily observation in each month, USD/barrel",
+    "first": "1987-05",
+    "last": "2026-09",
+    "observations": 473
+  },
+  "petrobras_share_distinct_company_earnings_2023_plus": {
+    "n": 45,
+    "median": 0.9212272038208894,
+    "mean": 0.9201815651946318,
+    "min": 0.9018453213581293,
+    "max": 0.9345132017915824
+  },
+  "energy_equals_petrobras": {
+    "months_equal": 106,
+    "months_compared": 225,
+    "share": 0.4711111111111111
+  },
+  "revision_correlations": {
+    "primary": {
+      "Petrobras": {
+        "n": 196,
+        "correlation": 0.995008997648791,
+        "r2_univariate": 0.9900429054020519
+      },
+      "Ex-Petrobras dynamic": {
+        "n": 96,
+        "correlation": 0.3696414852318043,
+        "r2_univariate": 0.13663482760437418
+      },
+      "Ex-Petrobras core (PRIO + Brava)": {
+        "n": 54,
+        "correlation": 0.5559409221884999,
+        "r2_univariate": 0.30907030896379967
+      }
+    },
+    "audit_clean": {
+      "Petrobras": {
+        "n": 165,
+        "correlation": 0.973412211418971,
+        "r2_univariate": 0.9475313333395716
+      },
+      "Ex-Petrobras dynamic": {
+        "n": 77,
+        "correlation": 0.3883261834378723,
+        "r2_univariate": 0.15079722474342402
+      },
+      "Ex-Petrobras core (PRIO + Brava)": {
+        "n": 51,
+        "correlation": 0.5951783919918513,
+        "r2_univariate": 0.3542373182940058
+      }
+    },
+    "since_2022_ex_seams": {
+      "Petrobras": {
+        "n": 54,
+        "correlation": 0.9924082123806499,
+        "r2_univariate": 0.9848740600005571
+      },
+      "Ex-Petrobras dynamic": {
+        "n": 54,
+        "correlation": 0.537773018478236,
+        "r2_univariate": 0.28919981940319317
+      },
+      "Ex-Petrobras core (PRIO + Brava)": {
+        "n": 51,
+        "correlation": 0.5951783919918513,
+        "r2_univariate": 0.3542373182940058
+      }
+    }
+  },
+  "difference_regressions": {
+    "Energy minus Petrobras": {
+      "primary": {
+        "n": 182,
+        "focus_beta": -0.11235249769913458,
+        "focus_p": 0.6559060598047166,
+        "brent_beta_std": -0.011492138215292434,
+        "brent_p": 0.8858679713143496
+      },
+      "audit_clean": {
+        "n": 151,
+        "focus_beta": -0.17434992006325153,
+        "focus_p": 0.767911762487868,
+        "brent_beta_std": -0.004727179403475218,
+        "brent_p": 0.9494457624496859
+      },
+      "since_2022_ex_seams": {
+        "n": 52,
+        "focus_beta": 0.14996909603183514,
+        "focus_p": 0.8356150354799907,
+        "brent_beta_std": 0.10387877168442408,
+        "brent_p": 0.6649704878796898
+      }
+    },
+    "Energy minus IBOV": {
+      "primary": {
+        "n": 182,
+        "focus_beta": 23.054176180437658,
+        "focus_p": 0.023203241153828102,
+        "brent_beta_std": -0.04482491828856966,
+        "brent_p": 0.7463314943684982
+      },
+      "audit_clean": {
+        "n": 151,
+        "focus_beta": 5.469457520311053,
+        "focus_p": 0.13483815868640825,
+        "brent_beta_std": 0.03740756303576798,
+        "brent_p": 0.7179692775728359
+      },
+      "since_2022_ex_seams": {
+        "n": 52,
+        "focus_beta": 2.4026987319511566,
+        "focus_p": 0.5223414817819831,
+        "brent_beta_std": 0.023508690206969426,
+        "brent_p": 0.9086234611066775
+      }
+    },
+    "Petrobras minus IBOV": {
+      "primary": {
+        "n": 182,
+        "focus_beta": 23.16652867813681,
+        "focus_p": 0.02238261029686539,
+        "brent_beta_std": -0.043195056686547495,
+        "brent_p": 0.7570996290489009
+      },
+      "audit_clean": {
+        "n": 151,
+        "focus_beta": 5.643807440374305,
+        "focus_p": 0.11821943805118917,
+        "brent_beta_std": 0.038985455889889914,
+        "brent_p": 0.7032775644377003
+      },
+      "since_2022_ex_seams": {
+        "n": 52,
+        "focus_beta": 2.2527296359193185,
+        "focus_p": 0.5430432020877678,
+        "brent_beta_std": 0.0008497199138349162,
+        "brent_p": 0.9960268968995729
+      }
+    }
+  },
+  "driver_correlations": {
+    "primary": {
+      "d_focus_pib3": {
+        "d_focus_pib3": 1.0,
+        "d_brent3": 0.3283399201,
+        "d_bcom_usd3": 0.3321224088
+      },
+      "d_brent3": {
+        "d_focus_pib3": 0.3283399201,
+        "d_brent3": 1.0,
+        "d_bcom_usd3": 0.7462422001
+      },
+      "d_bcom_usd3": {
+        "d_focus_pib3": 0.3321224088,
+        "d_brent3": 0.7462422001,
+        "d_bcom_usd3": 1.0
+      }
+    },
+    "audit_clean": {
+      "d_focus_pib3": {
+        "d_focus_pib3": 1.0,
+        "d_brent3": 0.1920229878,
+        "d_bcom_usd3": 0.2191129056
+      },
+      "d_brent3": {
+        "d_focus_pib3": 0.1920229878,
+        "d_brent3": 1.0,
+        "d_bcom_usd3": 0.758639256
+      },
+      "d_bcom_usd3": {
+        "d_focus_pib3": 0.2191129056,
+        "d_brent3": 0.758639256,
+        "d_bcom_usd3": 1.0
+      }
+    },
+    "since_2022_ex_seams": {
+      "d_focus_pib3": {
+        "d_focus_pib3": 1.0,
+        "d_brent3": 0.0724604831,
+        "d_bcom_usd3": -0.0106126789
+      },
+      "d_brent3": {
+        "d_focus_pib3": 0.0724604831,
+        "d_brent3": 1.0,
+        "d_bcom_usd3": 0.7564237425
+      },
+      "d_bcom_usd3": {
+        "d_focus_pib3": -0.0106126789,
+        "d_brent3": 0.7564237425,
+        "d_bcom_usd3": 1.0
+      }
+    }
+  }
+}

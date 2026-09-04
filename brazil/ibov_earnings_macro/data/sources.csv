@@ -1,0 +1,14 @@
+source_file,source_url,start_date,end_date,months,series,currency,benchmark,classification,metric,sha256
+grid_20qvjmd3.xlsx,https://researchxp1.s3.sa-east-1.amazonaws.com/grid_20qvjmd3.xlsx,2008-01-31,2010-12-31,36,11,BRL,IBOV,GICS Sector,BEst Net Inc,c1b37e2a5da044fd089eb45dd5ca0f40e63781523e2a09c67b670f57d1128845
+grid_u4lflnxf.xlsx,https://researchxp1.s3.sa-east-1.amazonaws.com/grid_u4lflnxf.xlsx,2011-01-31,2013-12-31,36,12,BRL,IBOV,GICS Sector,BEst Net Inc,7ed34657db550a54b2b6e35952e8cea3803d157d3bcd4656f10065798aef8138
+grid_vtqvtw11.xlsx,https://researchxp1.s3.sa-east-1.amazonaws.com/grid_vtqvtw11.xlsx,2014-01-31,2016-12-30,36,12,BRL,IBOV,GICS Sector,BEst Net Inc,b07e8c335aeed7f4131cd16da0014f34d9b1187c34f0bb65e4537f57e7dd6ee2
+grid_ovzcidwu.xlsx,https://researchxp1.s3.sa-east-1.amazonaws.com/grid_ovzcidwu.xlsx,2017-01-31,2019-12-31,36,12,BRL,IBOV,GICS Sector,BEst Net Inc,0b77cacde0be9686941e9d2ca6d0d0d902d0be0528a11595d8f1017fb9a866c8
+grid_1mk3z2wn.xlsx,https://researchxp1.s3.sa-east-1.amazonaws.com/grid_1mk3z2wn.xlsx,2020-01-31,2022-12-30,36,13,BRL,IBOV,GICS Sector,BEst Net Inc,477dd2d9a05cea515a92419c4a1345bd134024811585d80033286a331ef76d79
+grid_22fp35k1.xlsx,https://researchxp1.s3.sa-east-1.amazonaws.com/grid_22fp35k1.xlsx,2023-01-31,2026-09-03,45,12,BRL,IBOV,GICS Sector,BEst Net Inc,7a8101c3d80a549a50ff17c5535e281b1deb2b6ee9b3337f72e3956480ea71a8
+Ibovespa Best EPS.xlsx,Bloomberg export; local source,2006-01-31,2026-08-31,,BEst EPS,BRL,IBOV,Index,BEst EPS,
+BCB Focus PIB Total / IPCA,https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/aplicacao#!/recursos,2009-01-02,2026-08-21,,Focus annual medians,,,Macro,PIB and IPCA expectations,
+BCB SGS 13522,https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados?formato=json,2000-01-01,2026-07-01,,IPCA accumulated 12 months,,,Macro,percent,
+BCB SGS 1,https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados?formato=json,2006-01-01,2026-08-31,,USD/BRL,BRL per USD,,Macro,daily exchange rate,
+BCOM.xlsx,Bloomberg export; local source,2006-01-31,2026-08-31,,Bloomberg Commodity Index,USD,BCOM,Macro,last price,
+swap_pre_di_360.csv,https://researchxp1.s3.sa-east-1.amazonaws.com/bmf-swap.parquet,1994-10-01,2026-08-31,,Pre-DI swap 360 days,,,Macro,annual percent rate,
+EIA RBRTE daily,https://www.eia.gov/dnav/pet/hist/leafhandler.ashx?f=d&n=pet&s=rbrte,1987-05-20,2026-09-01,,Europe Brent Spot Price FOB,USD per barrel,Brent,Macro,daily spot price,
