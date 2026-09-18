@@ -1,0 +1,5 @@
+output/
+*.parquet
+raw_data.xlsx
+~$*
+__pycache__/

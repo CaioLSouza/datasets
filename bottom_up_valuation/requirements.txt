@@ -1,0 +1,5 @@
+pandas
+pyarrow
+openpyxl
+xlsxwriter
+pywin32  # só para o build_implied_ibov.py
