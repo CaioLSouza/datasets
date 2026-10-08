@@ -1,0 +1,109 @@
+{
+ "pulled": "2026-10-07 17:39",
+ "ibov_index_lines": {
+  "26": {
+   "BEST_SALES": 160409.72528696415,
+   "BEST_EBIT": 33247.22144046579,
+   "BEST_EBITDA": 50718.55301075591,
+   "BEST_CAPEX": -21468.22494925522
+  },
+  "27": {
+   "BEST_SALES": 165250.93796970107,
+   "BEST_EBIT": 35095.030312105126,
+   "BEST_EBITDA": 52448.439720156195,
+   "BEST_CAPEX": -21347.89854346965
+  },
+  "28": {
+   "BEST_SALES": 171865.56743318602,
+   "BEST_EBIT": 37020.13347390596,
+   "BEST_EBITDA": 54198.89347905945,
+   "BEST_CAPEX": -21866.047787552325
+  }
+ },
+ "missing": {
+  "mcap": [],
+  "sales26": [],
+  "ebit26": [
+   "BBAS3"
+  ],
+  "ebitda26": [
+   "BBDC3",
+   "BBDC4",
+   "BBAS3",
+   "ITSA4",
+   "ITUB4",
+   "PSSA3",
+   "SANB11"
+  ],
+  "ni26": [],
+  "capex26": [
+   "BBSE3",
+   "BBDC3",
+   "BBDC4",
+   "BRAP4",
+   "BBAS3",
+   "BPAC11",
+   "CXSE3",
+   "GOAU4",
+   "ITSA4",
+   "ITUB4",
+   "SANB11"
+  ],
+  "sales27": [],
+  "ebit27": [
+   "BBAS3"
+  ],
+  "ebitda27": [
+   "BBDC3",
+   "BBDC4",
+   "BBAS3",
+   "ITSA4",
+   "PSSA3",
+   "SANB11"
+  ],
+  "ni27": [],
+  "capex27": [
+   "BBSE3",
+   "BBDC3",
+   "BBDC4",
+   "BRAP4",
+   "BBAS3",
+   "BPAC11",
+   "CXSE3",
+   "GOAU4",
+   "ITSA4",
+   "ITUB4",
+   "SANB11"
+  ],
+  "sales28": [
+   "GOAU4"
+  ],
+  "ebit28": [
+   "BBAS3"
+  ],
+  "ebitda28": [
+   "BBDC3",
+   "BBDC4",
+   "BBAS3",
+   "GOAU4",
+   "ITSA4",
+   "PSSA3"
+  ],
+  "ni28": [
+   "GOAU4"
+  ],
+  "capex28": [
+   "BBSE3",
+   "BBDC3",
+   "BBDC4",
+   "BRAP4",
+   "BBAS3",
+   "BPAC11",
+   "CXSE3",
+   "GOAU4",
+   "ITSA4",
+   "ITUB4",
+   "SANB11"
+  ]
+ }
+}

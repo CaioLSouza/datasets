@@ -1,0 +1,412 @@
+{
+ "bx": {
+  "Financials": {
+   "w": 0.29231272984391926,
+   "pts": 60927.303521809394,
+   "pe": 9.800188889481698,
+   "pebf": 9.800188889481698,
+   "eps": 6216.951959691428,
+   "pe_cov": 1.0,
+   "bu_up": -0.07851324301448341,
+   "bu_bear": -0.2510322188581873,
+   "bu_bull": 0.1997271613198015,
+   "bu_cov": 1.0
+  },
+  "Defensives": {
+   "w": 0.2678206263304171,
+   "pts": 55822.367361651384,
+   "pe": 14.632596716680839,
+   "pebf": 14.632596716680839,
+   "eps": 3814.932403488925,
+   "pe_cov": 0.9935773513279254,
+   "ev": 7.637049604696067,
+   "evbf": 7.637049604696067,
+   "ev_cov": 1.0,
+   "evmc": 1.4258561841857063,
+   "nd": 23772.300356845568,
+   "evpts": 79594.66771849696,
+   "ebitda": 10422.175033347135,
+   "bu_up": 0.12784261398567534,
+   "bu_bear": -0.03465391082480951,
+   "bu_bull": 0.3626116910339532,
+   "bu_cov": 1.0
+  },
+  "Cyclicals": {
+   "w": 0.12604151344128098,
+   "pts": 26271.074646272005,
+   "pe": 12.940467307986964,
+   "pebf": 12.940467307986964,
+   "eps": 2030.148836283314,
+   "pe_cov": 1.0,
+   "ev": 7.637307629458769,
+   "evbf": 7.637307629458769,
+   "ev_cov": 1.0,
+   "evmc": 1.3225876843400535,
+   "nd": 8474.725135265575,
+   "evpts": 34745.79978153758,
+   "ebitda": 4549.482810868507,
+   "bu_up": 0.19290201297293721,
+   "bu_bear": -0.03452996019379384,
+   "bu_bull": 0.5089986773163371,
+   "bu_cov": 1.0
+  },
+  "Commodities": {
+   "w": 0.31382513038438287,
+   "pts": 65411.174470267266,
+   "pe": 6.429014461812362,
+   "pebf": 6.429014461812362,
+   "eps": 10174.370404484613,
+   "pe_cov": 0.9948657423047491,
+   "ev": 3.8333180828864815,
+   "evbf": 3.8333180828864815,
+   "ev_cov": 0.9893000638185132,
+   "evmc": 1.4776010436020157,
+   "nd": 31240.445190233175,
+   "evpts": 96651.61966050044,
+   "ebitda": 25213.56630747479,
+   "bu_up": 0.12359153353857695,
+   "bu_bear": -0.0501711167449983,
+   "bu_bull": 0.3782764301602568,
+   "bu_cov": 1.0
+  },
+  "Ibovespa": {
+   "w": 1.0000000000000002,
+   "pts": 208431.92000000007,
+   "pe": 9.374580618772072,
+   "pebf": 9.374580618772072,
+   "eps": 22233.732737081256,
+   "pe_cov": 0.9966686231193055,
+   "bu_up": 0.07438825934302698,
+   "bu_bear": -0.10275811097103404,
+   "bu_bull": 0.338365295601756,
+   "bu_cov": 1.0
+  },
+  "Cyclicals ex-WEG & Embraer": {
+   "w": 0.07708281695523868,
+   "pts": 16066.51953698895,
+   "pe": 10.776430572831751,
+   "pebf": 10.776430572831751,
+   "eps": 1490.8943576822123,
+   "pe_cov": 1.0,
+   "ev": 5.8962323721574785,
+   "evbf": 5.8962323721574785,
+   "ev_cov": 1.0,
+   "evmc": 1.5163148310696677,
+   "nd": 8295.382320617966,
+   "evpts": 24361.901857606914,
+   "ebitda": 4131.774380644482,
+   "bu_up": 0.2420835696737795,
+   "bu_bear": 0.06343879557618926,
+   "bu_bull": 0.5050762365575123,
+   "bu_cov": 1.0
+  },
+  "WEG & Embraer": {
+   "w": 0.048958696486042314,
+   "pts": 10204.555109283054,
+   "pe": 18.923449900230843,
+   "pebf": 18.923449900230843,
+   "eps": 539.2544786011017,
+   "pe_cov": 1.0,
+   "ev": 14.272991597012485,
+   "evbf": 14.272991597012485,
+   "ev_cov": 1.0,
+   "evmc": 1.0175747803531836,
+   "nd": 179.34281464760718,
+   "evpts": 10383.89792393066,
+   "ebitda": 727.5207761002354,
+   "bu_up": 0.1154683146753218,
+   "bu_bear": -0.18877646204874055,
+   "bu_bull": 0.5151743479271029,
+   "bu_cov": 1.0
+  },
+  "Ibovespa ex-Financials": {
+   "w": 0.7076872701560809,
+   "pts": 147504.61647819064,
+   "pe": 9.208612231450624,
+   "pebf": 9.208612231450624,
+   "eps": 16018.115734574087,
+   "pe_cov": 0.9952925861165206,
+   "ev": 5.313136331871563,
+   "evbf": 5.313136331871563,
+   "ev_cov": 0.9952550949990678,
+   "evmc": 1.4304100590080944,
+   "nd": 63487.47068234436,
+   "evpts": 210992.087160535,
+   "ebitda": 39711.400946907874,
+   "bu_up": 0.13754476566467214,
+   "bu_bear": -0.041512966301261334,
+   "bu_bull": 0.39563026729396666,
+   "bu_cov": 1.0
+  }
+ },
+ "fv": {
+  "P/E": {
+   "Financials|Bear": 44198.70008697565,
+   "Defensives|Bear": 44125.840283900645,
+   "Cyclicals|Bear": 27344.402787420287,
+   "Commodities|Bear": 48434.63012814033,
+   "Cyclicals ex-WEG & Embraer|Bear": 18030.95739467334,
+   "WEG & Embraer|Bear": 8106.988108637527,
+   "Financials|Base": 56515.425088384225,
+   "Defensives|Base": 55176.29447857772,
+   "Cyclicals|Base": 39072.389689168966,
+   "Commodities|Base": 77334.80212072084,
+   "Cyclicals ex-WEG & Embraer|Base": 26626.61431474796,
+   "WEG & Embraer|Base": 15389.142384392782,
+   "Financials|Bull": 70261.30753703533,
+   "Defensives|Bull": 67276.93529346335,
+   "Cyclicals|Bull": 52322.55329301428,
+   "Commodities|Bull": 107918.43327461061,
+   "Cyclicals ex-WEG & Embraer|Bull": 36509.6653522988,
+   "WEG & Embraer|Bull": 22981.793260265997,
+   "Ibovespa|Bear": 164103.5732864369,
+   "Ibovespa|Base": 228098.9113768518,
+   "Ibovespa|Bull": 297779.22939812357
+  },
+  "EV/EBITDA": {
+   "Financials|Bear": 44198.70008697565,
+   "Defensives|Bear": 46907.213230871326,
+   "Cyclicals|Bear": 27330.029934780287,
+   "Commodities|Bear": 52971.28654523378,
+   "Cyclicals ex-WEG & Embraer|Bear": 19552.728770552647,
+   "WEG & Embraer|Bear": 6379.818006415557,
+   "Financials|Base": 56515.425088384225,
+   "Defensives|Base": 61167.57620611367,
+   "Cyclicals|Base": 39652.840865624596,
+   "Commodities|Base": 78508.9485503796,
+   "Cyclicals ex-WEG & Embraer|Base": 31877.374515068124,
+   "WEG & Embraer|Base": 11734.89721502915,
+   "Financials|Bull": 70261.30753703533,
+   "Defensives|Bull": 76829.98113637407,
+   "Cyclicals|Bull": 53595.91258293783,
+   "Commodities|Bull": 105652.63104119638,
+   "Cyclicals ex-WEG & Embraer|Bull": 46051.98829869781,
+   "WEG & Embraer|Bull": 17319.716854635688,
+   "Ibovespa|Bear": 171407.22979786104,
+   "Ibovespa|Base": 235844.7907105021,
+   "Ibovespa|Bull": 306339.83229754365
+  },
+  "Bottom-up": {
+   "Financials|Bear": 45632.58732968333,
+   "Defensives|Bear": 53887.90402107096,
+   "Cyclicals|Bear": 25363.935484488047,
+   "Commodities|Bear": 62129.42279949204,
+   "Cyclicals ex-WEG & Embraer|Bear": 17085.760185516843,
+   "WEG & Embraer|Bear": 8278.1752989712,
+   "Financials|Base": 56143.703334184385,
+   "Defensives|Base": 62958.84472403355,
+   "Cyclicals|Base": 31338.81782850017,
+   "Commodities|Base": 73495.44183360701,
+   "Cyclicals ex-WEG & Embraer|Base": 19955.959938736753,
+   "WEG & Embraer|Base": 11382.85788976341,
+   "Financials|Bull": 73096.14090109033,
+   "Defensives|Bull": 76064.21038817836,
+   "Cyclicals|Bull": 39643.016892903215,
+   "Commodities|Bull": 90154.68004146969,
+   "Cyclicals ex-WEG & Embraer|Bull": 24181.336759309073,
+   "WEG & Embraer|Bull": 15461.680133594138,
+   "Ibovespa|Bear": 187013.84963473436,
+   "Ibovespa|Base": 223936.80772032513,
+   "Ibovespa|Bull": 278958.0482236416
+  },
+  "Average": {
+   "Financials|Bear": 44915.64370832949,
+   "Defensives|Bear": 48306.98584528098,
+   "Cyclicals|Bear": 26679.45606889621,
+   "Commodities|Bear": 54511.779824288715,
+   "Cyclicals ex-WEG & Embraer|Bear": 18223.148783580942,
+   "WEG & Embraer|Bear": 7588.327138008095,
+   "Financials|Base": 56329.564211284305,
+   "Defensives|Base": 59767.571802908315,
+   "Cyclicals|Base": 36688.016127764575,
+   "Commodities|Base": 76446.39750156915,
+   "Cyclicals ex-WEG & Embraer|Base": 26153.316256184276,
+   "WEG & Embraer|Base": 12835.632496395114,
+   "Financials|Bull": 71678.72421906283,
+   "Defensives|Bull": 73390.37560600525,
+   "Cyclicals|Bull": 48520.49425628511,
+   "Commodities|Bull": 101241.9147857589,
+   "Cyclicals ex-WEG & Embraer|Bull": 35580.99680343523,
+   "WEG & Embraer|Bull": 18587.730082831942,
+   "Ibovespa|Bear": 174413.8654467954,
+   "Ibovespa|Base": 229231.54964352635,
+   "Ibovespa|Bull": 294831.5088671121
+  }
+ },
+ "tgt": {
+  "P/E": {
+   "Financials|Bear": 7.003010135522002,
+   "Defensives|Bear": 11.432460314088313,
+   "Cyclicals|Bear": 13.228991073688045,
+   "Commodities|Bear": 4.72464965231169,
+   "Cyclicals ex-WEG & Embraer|Bear": 11.8361696544158,
+   "WEG & Embraer|Bear": 14.949559522371112,
+   "Financials|Base": 8.558698845434048,
+   "Defensives|Base": 13.80075668935652,
+   "Cyclicals|Base": 17.9154898422968,
+   "Commodities|Base": 7.372380769103527,
+   "Cyclicals ex-WEG & Embraer|Base": 16.397910497980185,
+   "WEG & Embraer|Base": 27.895548321457106,
+   "Financials|Bull": 10.114387555346093,
+   "Defensives|Bull": 16.169053064624727,
+   "Cyclicals|Bull": 22.601988610905558,
+   "Commodities|Bull": 10.020111885895364,
+   "Cyclicals ex-WEG & Embraer|Bull": 20.95965134154457,
+   "WEG & Embraer|Bull": 40.8415371205431
+  },
+  "EV/EBITDA": {
+   "Financials|Bear": null,
+   "Defensives|Bear": 6.702992761178077,
+   "Cyclicals|Bear": 7.729739143407704,
+   "Commodities|Bear": 3.3148164579590453,
+   "Cyclicals ex-WEG & Embraer|Bear": 6.596269784665801,
+   "WEG & Embraer|Bear": 8.965313910804813,
+   "Financials|Base": null,
+   "Defensives|Base": 7.776612847185261,
+   "Cyclicals|Base": 9.84732930944131,
+   "Commodities|Base": 4.221902259527348,
+   "Cyclicals ex-WEG & Embraer|Base": 8.927183723787643,
+   "WEG & Embraer|Base": 16.007930511721927,
+   "Financials|Bull": null,
+   "Defensives|Bull": 8.850232933192444,
+   "Cyclicals|Bull": 11.964919475474916,
+   "Commodities|Bull": 5.128988061095651,
+   "Cyclicals ex-WEG & Embraer|Bull": 11.258097662909485,
+   "WEG & Embraer|Bull": 23.05054711263904
+  }
+ },
+ "sens": {
+  "Financials": 2.761775316561862,
+  "Defensives": 2.1334944044785193,
+  "Cyclicals": 3.300884527918307,
+  "Commodities": 1.377884489845251,
+  "Cyclicals ex-WEG & Embraer": 3.9614274021918994,
+  "WEG & Embraer": 1.0232818169932927
+ },
+ "hist_stats": {
+  "pe|Financials": [
+   8.558698845434048,
+   1.555688709912046
+  ],
+  "pe|Defensives": [
+   13.80075668935652,
+   2.3682963752682067
+  ],
+  "pe|Cyclicals": [
+   17.9154898422968,
+   4.686498768608756
+  ],
+  "pe|Commodities": [
+   7.372380769103527,
+   2.6477311167918374
+  ],
+  "pe|Cyclicals ex-WEG & Embraer": [
+   16.397910497980185,
+   4.561740843564385
+  ],
+  "pe|WEG & Embraer": [
+   27.895548321457106,
+   12.945988799085994
+  ],
+  "pe|Ibovespa": [
+   9.360151356985721,
+   2.111876029712036
+  ],
+  "ev|Defensives": [
+   7.776612847185261,
+   1.0736200860071834
+  ],
+  "ev|Cyclicals": [
+   9.84732930944131,
+   2.1175901660336067
+  ],
+  "ev|Commodities": [
+   4.221902259527348,
+   0.9070858015683025
+  ],
+  "ev|Cyclicals ex-WEG & Embraer": [
+   8.927183723787643,
+   2.3309139391218414
+  ],
+  "ev|WEG & Embraer": [
+   16.007930511721927,
+   7.042616600917113
+  ],
+  "ev|Ibovespa ex-Financials": [
+   5.722918101219322,
+   1.0762987384589038
+  ]
+ },
+ "members_sample": {
+  "key2": {
+   "ALOS3": "Cyclicals ex-WEG & Embraer",
+   "ABEV3": "Defensives",
+   "ASAI3": "Defensives",
+   "AURE3": "Defensives",
+   "AXIA3": "Defensives"
+  },
+  "wn": {
+   "ALOS3": 0.005477,
+   "ABEV3": 0.023014,
+   "ASAI3": 0.005943,
+   "AURE3": 0.00172,
+   "AXIA3": 0.048263
+  },
+  "pts": {
+   "ALOS3": 1141.495658,
+   "ABEV3": 4796.868225,
+   "ASAI3": 1238.792817,
+   "AURE3": 358.527454,
+   "AXIA3": 10059.549161
+  },
+  "pe_sel": {
+   "ALOS3": 17.337212,
+   "ABEV3": 15.190082,
+   "ASAI3": 12.37875,
+   "AURE3": NaN,
+   "AXIA3": 11.980718
+  },
+  "ev_sel": {
+   "ALOS3": 9.398526,
+   "ABEV3": 7.556853,
+   "ASAI3": 5.803644,
+   "AURE3": 9.953786,
+   "AXIA3": 6.86043
+  },
+  "evmc": {
+   "ALOS3": 1.414401,
+   "ABEV3": 0.94177,
+   "ASAI3": 2.296666,
+   "AURE3": 2.292543,
+   "AXIA3": 1.249166
+  },
+  "up": {
+   "ALOS3": 0.144923,
+   "ABEV3": -0.213075,
+   "ASAI3": -0.187307,
+   "AURE3": -0.121245,
+   "AXIA3": 0.211579
+  },
+  "ke_used": {
+   "ALOS3": 0.093205,
+   "ABEV3": 0.084615,
+   "ASAI3": 0.126,
+   "AURE3": 0.092349,
+   "AXIA3": 0.064277
+  },
+  "c_bear": {
+   "ALOS3": -0.145676,
+   "ABEV3": -0.134969,
+   "ASAI3": -0.182874,
+   "AURE3": -0.144629,
+   "AXIA3": -0.107773
+  },
+  "c_bull": {
+   "ALOS3": 0.20557,
+   "ABEV3": 0.184874,
+   "ASAI3": 0.28833,
+   "AURE3": 0.203489,
+   "AXIA3": 0.137386
+  }
+ }
+}

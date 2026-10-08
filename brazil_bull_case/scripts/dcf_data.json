@@ -1,0 +1,64 @@
+{
+ "pulled": "2026-10-07 15:11",
+ "index": {
+  "PX_LAST": 205360.74,
+  "BEST_PE_RATIO_26": 9.746639040296154,
+  "BEST_ROE_26": 15.790911059636557,
+  "BEST_EPS_26": 21118.591665188582,
+  "BEST_PE_RATIO_27": 9.360049671874968,
+  "BEST_ROE_27": 16.39008337624605,
+  "BEST_EPS_27": 21889.876355640874,
+  "BEST_PE_RATIO_28": 8.766001912177716,
+  "BEST_ROE_28": 16.02587859485999,
+  "BEST_EPS_28": 23373.292870877278,
+  "BEST_PE_RATIO_bf": 9.437487623907241,
+  "BEST_ROE_bf": 16.251468362622887,
+  "BEST_EPS_bf": 21710.26211265883
+ },
+ "no_roe_history": [
+  "AMOB3",
+  "AXIA7",
+  "CPLE5",
+  "CYRE4",
+  "GOAU4",
+  "LOGG3",
+  "RENT4"
+ ],
+ "n_hist": 9300,
+ "n_roe": 8989,
+ "missing_snapshot": {
+  "px_today": [],
+  "pe26": [
+   "AURE3",
+   "CSAN3",
+   "MRVE3",
+   "CSNA3"
+  ],
+  "roe26": [
+   "ITSA4"
+  ],
+  "pe27": [
+   "AURE3",
+   "CSNA3"
+  ],
+  "roe27": [
+   "GOAU4",
+   "ITSA4"
+  ],
+  "pe28": [
+   "GOAU4"
+  ],
+  "roe28": [
+   "GOAU4",
+   "ITSA4"
+  ],
+  "pebf": [
+   "AURE3",
+   "CSNA3"
+  ],
+  "roebf": [
+   "GOAU4",
+   "ITSA4"
+  ]
+ }
+}
